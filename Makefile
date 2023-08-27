@@ -58,9 +58,9 @@ LIB=lib$(MYNAME).a
 all: test $(MAIN_PROG)
 
 COMMON_SRCS = finch.c blit.c
-LIB_SRCS :=  $(COMMON_SRCS) sound.c
+LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
 TEST_SRCS := finch_test.c
-MAIN_SRCS := sdl2main.c finch_main.c
+MAIN_SRCS := finch_main.c
 
 TEST_OBJS := $(addprefix $(OUTDIR)/,$(TEST_SRCS:.c=.o))
 LIB_OBJS := $(addprefix $(OUTDIR)/,$(LIB_SRCS:.c=.o))
