@@ -28,7 +28,7 @@ inline int LSMax(int a, int b)
     return (a > b) ? a : b;	
 }
 
-typedef uint8_t LSBool;
+typedef bool LSBool;
 
 typedef struct {
 	uint32_t id; // unique id of this graph buffer.
@@ -99,13 +99,11 @@ void DrawHorzLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t x2, i
 // vertical line drawing: NOTE y1 has to be less than or same as y2
 void DrawVertLine(GraphicsBuffer *buffer, Pixel color, int32_t y1, int32_t y2, int32_t x);
 
-
 // General case line drawing(Bresenheim's)
 void DrawLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 
 // Draw line but composite with source pixel based on alpha values rather than overwrite.
 void DrawLineComposite(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-
 
 // rect drawing, does clip.
 void DrawRect(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t top, int32_t right, int32_t bottom);
