@@ -11,42 +11,7 @@ FLAGS += -std=c99
 
 LFLAGS+= -lm  -lpng # include math library, libm
 
-ifeq ($(OS),Windows_NT)
-
-    # win/mingw specific
-    FLAGS+= -I/mingw64/include/libpng16/
-    FLAGS+= -I/mingw64/include/SDL2
-
-    LFLAGS+= -L/mingw64/lib
-    SDL_LFLAGS=$(LFLAGS)
-
-    # win / mingw only
-    #SDL_LFLAGS+= -mwindows
-    #SDL_LFLAGS+= -Wl,-subsystem,windows 
-
-    SDL_LFLAGS+= -lmingw32 
-    SDL_LFLAGS+= -lSDL2main
-    SDL_LFLAGS+= -lSDL2 
-else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Darwin)
-        # mac specific and Apple silicon specific
-        FLAGS+= -I/opt/homebrew/include
-        FLAGS+= -I/opt/homebrew/include/SDL2
-        LFLAGS+= -L/opt/homebrew/lib
-
-        SDL_LFLAGS=$(LFLAGS)
-        SDL_LFLAGS+= -lSDL2 
-    else
-        FLAGS+= -I/usr/include/SDL2
-        FLAGS+= -I/usr/local/include/SDL2
-        # not Mac or Windows
-        FLAGS+= $(shell sdl2-config --cflags)
-        SDL_LFLAGS+= $(shell sdl2-config --libs)
-    endif
-endif
-
-SDL_LFLAGS+= -lSDL2_mixer 
+include Makefile.sdlflags
 
 OUTDIR = build
 DEPDIR = build/deps
