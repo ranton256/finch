@@ -53,14 +53,17 @@ DEPDIR = build/deps
 
 TEST_PROG=$(MYNAME)_test
 MAIN_PROG=$(MYNAME)
+LIB=lib$(MYNAME).a
 
-all: print tests $(MAIN_PROG)
+all: test $(MAIN_PROG)
 
 COMMON_SRCS = finch.c blit.c
-TEST_SRCS := $(COMMON_SRCS) finch_test.c
-MAIN_SRCS := $(COMMON_SRCS) sdl2main.c sound.c finch_main.c
+LIB_SRCS :=  $(COMMON_SRCS) sound.c
+TEST_SRCS := finch_test.c
+MAIN_SRCS := sdl2main.c finch_main.c
 
 TEST_OBJS := $(addprefix $(OUTDIR)/,$(TEST_SRCS:.c=.o))
+LIB_OBJS := $(addprefix $(OUTDIR)/,$(LIB_SRCS:.c=.o))
 MAIN_OBJS := $(addprefix $(OUTDIR)/,$(MAIN_SRCS:.c=.o))
 
 .PHONY: print
@@ -72,21 +75,27 @@ print:
 	@echo COMMON_SRCS=$(COMMON_SRCS)
 	@echo TEST_SRCS=$(TEST_SRCS)
 	@echo TEST_OBJS=$(TEST_OBJS)
+	@echo LIB_OBJS=$(TEST_OBJS)
+	@echo MAIN_OBJS=$(TEST_OBJS)
 	@echo OUTDIR=$(OUTDIR)
 	@echo DEPDIR=$(DEPDIR)
 
 clean:
-	rm -f *.o $(OBJS) $(TEST_PROG)
+	rm -f *.o $(OBJS) $(TEST_PROG) $(MAIN_PROG) $(LIB)
 	rm -f .depend gmon.out core
 	rm -Rf build/*.o
 	rm -Rf build/deps/*
 	rm -Rf build/installer/
 
-$(MAIN_PROG): $(MAIN_OBJS)
-	$(CC) $(FLAGS) $(MAIN_OBJS) -o $(MAIN_PROG) $(SDL_LFLAGS)
+$(LIB): $(LIB_OBJS)
+	$(AR) r $@ $(LIB_OBJS)
+	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
 
-$(TEST_PROG): $(TEST_OBJS)
-	$(CC) $(FLAGS) $(TEST_OBJS) -o $(TEST_PROG) $(LFLAGS)
+$(MAIN_PROG): $(MAIN_OBJS) $(LIB)
+	$(CC) $(FLAGS) $(MAIN_OBJS) $(LIB) -o $(MAIN_PROG) $(SDL_LFLAGS)
+
+$(TEST_PROG): $(TEST_OBJS) $(LIB)
+	$(CC) $(FLAGS) $(TEST_OBJS) $(LIB) -o $(TEST_PROG) $(LFLAGS)
 
 test: tests
 tests: $(TEST_PROG)
