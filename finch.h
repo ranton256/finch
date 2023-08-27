@@ -1,7 +1,10 @@
 #ifndef __FINCH__
 #define __FINCH__
 
+#include "input_events.h"
+
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint32_t Pixel;
 
@@ -53,7 +56,21 @@ extern inline uint32_t LSCompositePixels(uint32_t sp, uint32_t dp);
 extern inline uint32_t LSCompositePixelsOpaque(uint32_t sp, uint32_t dp);
 
 
+// These must be defined by the code for the program using Finch.
+// They are used as callbacks, but are only called after
+// FinchStartGraphics() has been called.
+bool FinchMain(int argc, const char* argv[]);
+bool FinchInit(int width, int height, void** userData);
+void FinchRenderProc(int width, int height, uint32_t* pixels, void *userData);
+void FinchCleanup(void *userData);
+void FinchHandleEvent(InputEvent* event, void* userData);
+bool FinchDone(void* userData);
+void FinchUpdate(void* userData, double elapsedTicks);
 
+// Call this to start the graphics system and show the window,
+// but NOTE this will start the main event processing loop,
+// which will not return until FinchDone() hook returns true.
+bool FinchStartGraphics(int width, int height);
 
 // This creates a graph buffer, if you pass NULL
 // for the memory parameter, it allocates it, and frees it with the buffer

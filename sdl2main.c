@@ -1,16 +1,9 @@
-// #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include "finch.h"
 
-#include "input_events.h"
 #include "sound.h"
 
-// may not work on windows...
 #ifndef __WINDOWS__
 #include <unistd.h>
 #else
@@ -18,21 +11,9 @@
 #include <direct.h>
 #include <errno.h>
 
-
 #define getcwd _getcwd
 #define chdir _chdir
 #endif
-
-extern int WIN_WIDTH;
-extern int WIN_HEIGHT;
-
-// These are defined by the portable code for each app/game.
-bool FinchInit(int width, int height, void** userData);
-void FinchRenderProc(int width, int height, uint32_t* pixels, void *userData);
-void FinchCleanup(void *userData);
-void FinchHandleEvent(InputEvent* event, void* userData);
-bool FinchDone(void* userData);
-void FinchUpdate(void* userData, double elapsedTicks);
 
 typedef struct GameState {
     SDL_Rect windowRect;
@@ -44,6 +25,8 @@ typedef struct GameState {
 	void* userData;
 } GameState;
 
+bool sFinchStarted = false;
+
 bool Setup(GameState* state);
 void Cleanup(GameState* state);
 bool InitSDL();
@@ -53,16 +36,38 @@ SDL_Renderer* CreateRenderer(SDL_Window* window);
 void Render(GameState* state);
 void MainLoop(GameState* state);
 
-
-
-
 #ifdef __WINDOWS__
 const char PATH_SEP = '\\';
 #else
 const char PATH_SEP = '/';
 #endif
 
-bool find_app_dir(const char* argv0, char* result, int bufSize)
+
+bool FinchStartGraphics(int width, int height)
+{
+	GameState state = {0};
+    
+    // This sets size and position of window.
+    state.windowRect.x = 550;
+    state.windowRect.y = 250;
+    state.windowRect.w = width;
+    state.windowRect.h = height;
+    
+	printf("Calling Setup\n");
+	if ( !Setup(&state) )
+    {
+        fprintf(stderr, "Setup failed.\n");
+		return false;
+    }
+	sFinchStarted = true;
+    
+	MainLoop(&state);
+
+	Cleanup(&state);
+	return true;
+}
+
+static bool FindAppDir(const char* argv0, char* result, int bufSize)
 {
 	int slen = strlen(argv0);
    	const char *endPtr = argv0 + slen;
@@ -84,46 +89,30 @@ bool find_app_dir(const char* argv0, char* result, int bufSize)
 	return false;
 }
 
-int main( int argc, char* args[] )
+static void SetWorkingDir(int argc, const char* argv[])
 {
-	GameState state = {0};
-    
-	
 	char appDir[256];
-	printf("starting up\n");
-
-	find_app_dir(args[0], appDir, sizeof(appDir));
+	FindAppDir(argv[0], appDir, sizeof(appDir));
 
 	const char* wkDir = appDir;
 	if (argc > 1) {
-		wkDir = args[1];
+		wkDir = argv[1];
 	}
 
 	// change to same directory as binary.
 	(void)chdir(wkDir);
 
-	// If we are on mac, in an application bundle, we need to change to "../Contents"
+	// If we are on mac in an application bundle, we need to change to "../Contents"
 	// This should just fail to do anything if we don't have a sibling "Resources directory"
 	(void)chdir("../Resources");
+}
 
-    // This sets size and position of window.
-    state.windowRect.x = 550;
-    state.windowRect.y = 250;
-    state.windowRect.w = WIN_WIDTH;
-    state.windowRect.h = WIN_HEIGHT;
-    
-	printf("Calling Setup\n");
-	if ( !Setup(&state) )
-    {
-        fprintf(stderr, "Setup failed.\n");
-		return -1;
-    }
-    
-	MainLoop(&state);
-
-    Cleanup(&state);
-
-    return 0;
+int main(int argc, const char* argv[])
+{
+	printf("starting up\n");
+	SetWorkingDir(argc, argv);
+	bool good = FinchMain(argc, argv);
+	return good ? 0 : 1;
 }
 
 // Poll for events, and handle the ones we care about.

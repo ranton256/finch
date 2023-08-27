@@ -1,6 +1,8 @@
 #ifndef __SOUND__
 #define __SOUND__
 
+#include <stdbool.h>
+
 bool InitSound();
 
 bool PlayMusic(const char* musicPath);

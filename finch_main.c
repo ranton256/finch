@@ -4,15 +4,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <ctype.h>
 
 
-int WIN_WIDTH = 1024;
-int WIN_HEIGHT = 768;
+static int WIN_WIDTH = 1024;
+static int WIN_HEIGHT = 768;
+static bool sDone = false;
 
-bool sDone = false;
+bool FinchMain(int argc, const char** argv)
+{
+    printf("Main\n");
+    return FinchStartGraphics(WIN_WIDTH, WIN_HEIGHT);
+}
 
 bool FinchInit(int width, int height, void** userData)
 {
@@ -20,6 +23,7 @@ bool FinchInit(int width, int height, void** userData)
         *userData = NULL;
         // we don't have any userdata at the moment.
     }
+    
     return true;
 }
 
