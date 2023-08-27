@@ -42,10 +42,16 @@ const char PATH_SEP = '\\';
 const char PATH_SEP = '/';
 #endif
 
+void* sUserData = NULL;
+const int MIN_TICKS_PER_FRAME = 1;
+
 
 bool FinchStartGraphics(int width, int height)
 {
 	GameState state = {0};
+    
+    printf("FinchStartGraphics() sUserData  = %lx\n", (unsigned long)sUserData);
+    state.userData = sUserData;
     
     // This sets size and position of window.
     state.windowRect.x = 550;
@@ -111,7 +117,11 @@ int main(int argc, const char* argv[])
 {
 	printf("starting up\n");
 	SetWorkingDir(argc, argv);
-	bool good = FinchMain(argc, argv);
+    
+	bool good = FinchMain(argc, argv, &sUserData);
+    if(!sUserData) {
+        fprintf(stderr, "Warning: no user data set by FinchMain!\n");
+    }
 	return good ? 0 : 1;
 }
 
@@ -174,7 +184,6 @@ bool PollEvent( InputEvent* outEvent )
 	return result != 0;
 }
 
-const int MIN_TICKS_PER_FRAME = 1;
 
 void MainLoop(GameState* state)
 {
@@ -258,7 +267,7 @@ bool Setup(GameState* state)
     state->pixelsTexture = SDL_CreateTexture(state->renderer,
         SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, width, height);
 	
-	return FinchInit(width, height, &state->userData);
+	return FinchInit(width, height, state->userData);
 }
 
 bool InitSDL()

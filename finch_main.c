@@ -11,34 +11,32 @@ static int WIN_WIDTH = 1024;
 static int WIN_HEIGHT = 768;
 static bool sDone = false;
 
-bool FinchMain(int argc, const char** argv)
-{
-    printf("Main\n");
-    return FinchStartGraphics(WIN_WIDTH, WIN_HEIGHT);
-}
-
-bool FinchInit(int width, int height, void** userData)
+bool FinchMain(int argc, const char** argv, void** userData)
 {
     if(userData) {
         *userData = NULL;
         // we don't have any userdata at the moment.
     }
     
+    printf("Main\n");
+    return FinchStartGraphics(WIN_WIDTH, WIN_HEIGHT);
+}
+
+bool FinchInit(int width, int height, void* userData)
+{
+    printf("Init\n");
     return true;
 }
 
 void FinchCleanup()
 {
-    // nothing so far.
+    printf("Cleanup\n");
 }
-
-
 
 bool FinchDone(void* userData)
 {
     return sDone;
 }
-
 
 void FinchRenderProc(int width, int height, uint32_t* pixels, void *userData)
 {
@@ -69,7 +67,7 @@ void FinchRenderProc(int width, int height, uint32_t* pixels, void *userData)
 
 void FinchUpdate(void* userData, double elapsedTicks)
 {
-
+    // ....
 }
 
 void FinchHandleEvent(InputEvent* event, void* userData)

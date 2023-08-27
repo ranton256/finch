@@ -55,12 +55,13 @@ extern inline uint32_t LSCompositeValues(uint32_t a, uint32_t b, uint32_t m);
 extern inline uint32_t LSCompositePixels(uint32_t sp, uint32_t dp);
 extern inline uint32_t LSCompositePixelsOpaque(uint32_t sp, uint32_t dp);
 
-
 // These must be defined by the code for the program using Finch.
 // They are used as callbacks, but are only called after
 // FinchStartGraphics() has been called.
-bool FinchMain(int argc, const char* argv[]);
-bool FinchInit(int width, int height, void** userData);
+// userData in FinchMain points to a ptr avaiable for the program's use
+// which will be passed along in calls to the other functions.
+bool FinchMain(int argc, const char* argv[], void** userData);
+bool FinchInit(int width, int height, void* userData);
 void FinchRenderProc(int width, int height, uint32_t* pixels, void *userData);
 void FinchCleanup(void *userData);
 void FinchHandleEvent(InputEvent* event, void* userData);
