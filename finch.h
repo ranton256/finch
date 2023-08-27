@@ -116,9 +116,6 @@ void BlitGraphBufferComposite(
 	int32_t yDestLoc
 	);
 
-// this is actually platform specific (or at least SDL specific).
-uint32_t MakeColor(uint8_t r, uint8_t g, uint8_t b);
-
 // this checks to see if a point is in a rect.
 int LSPointInRect( int x, int y, const LSRect r );
 // this checks for intersection of 2 rectangles.

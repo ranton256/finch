@@ -20,7 +20,13 @@ TEST_PROG=$(MYNAME)_test
 MAIN_PROG=$(MYNAME)
 LIB=lib$(MYNAME).a
 
-all: test $(MAIN_PROG)
+all: test build
+
+build: $(MAIN_PROG) $(TEST_PROG)
+
+test: tests
+tests: $(TEST_PROG)
+	./$(TEST_PROG)
 
 COMMON_SRCS = finch.c blit.c
 LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
@@ -62,9 +68,6 @@ $(MAIN_PROG): $(MAIN_OBJS) $(LIB)
 $(TEST_PROG): $(TEST_OBJS) $(LIB)
 	$(CC) $(FLAGS) $(TEST_OBJS) $(LIB) -o $(TEST_PROG) $(LFLAGS)
 
-test: tests
-tests: $(TEST_PROG)
-	./$(TEST_PROG)
 
 force:
 

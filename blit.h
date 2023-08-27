@@ -3,6 +3,8 @@
 
 #include "finch.h"
 
+// These are for blitting pixel data to SDL buffers.
+
 uint32_t MakeColor(uint8_t r, uint8_t g, uint8_t b);
 uint32_t MakeColorWithAlpha(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 

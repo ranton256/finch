@@ -1,4 +1,6 @@
 #include "finch.h"
+#include "blit.h"
+#include "input_events.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +8,6 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#include "input_events.h"
 
 int WIN_WIDTH = 1024;
 int WIN_HEIGHT = 768;
