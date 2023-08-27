@@ -55,25 +55,6 @@ void MainLoop(GameState* state);
 
 
 
-bool WriteEntireTextFile(const char* path, const void* contents, long size)
-{
-    FILE* fp = fopen(path, "w");
-    if(!fp) {
-        fprintf(stderr, "Error opening file for writing %s\n", path);
-        return false;
-    }
-    int result = fwrite(contents, size, 1, fp);
-    if(result < 0) {
-        fprintf(stderr, "Error writing file %s\n", path);
-        fclose(fp);
-        return false;
-    }
-    if(fclose(fp)) {
-        fprintf(stderr, "Error closing file %s\n", path);
-        return false;
-    }
-    return true;
-}
 
 #ifdef __WINDOWS__
 const char PATH_SEP = '\\';
@@ -112,16 +93,6 @@ int main( int argc, char* args[] )
 	printf("starting up\n");
 
 	find_app_dir(args[0], appDir, sizeof(appDir));
-
-	if(true) {
-		// this is for debugging path startup issues in installers.
-		char wdBuf[256];
-		char *cwd = (char *)getcwd(wdBuf, sizeof(wdBuf));
-
-		char contents[512];
-		snprintf(contents, sizeof(contents), "argv[0]: %s\ncwd: %s\nappdir: %s\n", args[0], cwd, appDir);
-		WriteEntireTextFile("/tmp/fm_my_cwd.txt", contents, strlen(contents));
-	}	
 
 	const char* wkDir = appDir;
 	if (argc > 1) {
