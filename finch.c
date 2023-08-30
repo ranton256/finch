@@ -148,7 +148,7 @@ void PutPixel(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y)
 void DrawHorzLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t x2, int32_t y)
 {
 	// check that the line is on the screen
-	if( y >= 0 && y < buffer->height && x2 >= 0 && x1 < (int32_t)buffer->width)
+	if( x1 <= x2 && y >= 0 && y < buffer->height && x2 >= 0 && x1 < (int32_t)buffer->width)
 	{
 		// clip x coordinates to the screen.
 		if( x1 < 0 )
@@ -176,7 +176,7 @@ void DrawHorzLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t x2, i
 void DrawVertLine(GraphicsBuffer *buffer, Pixel color, int32_t y1, int32_t y2, int32_t x)
 {
 	// check that the line is on the screen
-	if( x >= 0 && x < buffer->width && y2 >= 0 && y1 < buffer->height )
+	if( y1 <= y2 && x >= 0 && x < buffer->width && y2 >= 0 && y1 < buffer->height )
 	{
 		if( y1 < 0 )
 			y1 = 0;
