@@ -1,4 +1,5 @@
 #include "finch.h"
+#include "blit.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -158,6 +159,31 @@ static bool BlitBufferTest(GraphicsBuffer *buffer)
 	return result;
 }
 
+static bool ColorTest()
+{
+    // void Color2Values(uint32_t color, uint8_t components[4])
+    uint8_t inRed = 255, inGreen = 120, inBlue = 45, inAlpha = 222;
+    uint8_t outValues[4];
+    
+    uint32_t color = MakeColorWithAlpha(inRed,inGreen,inBlue,inAlpha);
+    
+    outValues[0] = outValues[1] = outValues[2] = outValues[3] = 0;
+    Color2Values(color, outValues);
+    bool good = inRed == outValues[0] && inGreen  == outValues[1] && inBlue == outValues[2] && inAlpha == outValues[3];
+    if(!good) {
+        return false;
+    }
+    
+    outValues[0] = outValues[1] = outValues[2] = outValues[3] = 0;
+    color = MakeColor(inRed,inGreen,inBlue);
+    Color2Values(color, outValues);
+    good = inRed == outValues[0] && inGreen  == outValues[1] && inBlue == outValues[2];
+    if(!good) {
+        return false;
+    }
+    return true;
+}
+
 static int CircleStatus(uint32_t x, uint32_t y)
 {
 	// Do some trig!!!
@@ -261,6 +287,7 @@ static bool FinchTests()
 	bool good = true;
 
 	FinchUnitTest tests[] = {
+        {ColorTest, "ColorTest"},
 		{PutPixelTest, "PutPixelTest"},
 		{FillRectTest, "FillRectTest"},
 		{FillRectOpaqueTest, "FillRectOpaqueTest"},

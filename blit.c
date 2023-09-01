@@ -11,6 +11,20 @@ uint32_t MakeColorWithAlpha(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
         return (((uint32_t)a) << 24) | (((uint32_t)r) << 16) | (((uint32_t)g) << 8) | b;
 }
 
+void Color2Values(uint32_t color, uint8_t components[4])
+{
+    // TODO: return (((uint32_t)a) << 24) | (((uint32_t)r) << 16) | (((uint32_t)g) << 8) | b;
+    uint32_t tmp = color;
+    components[2] = tmp & 0xff; // blue
+    tmp >>= 8;
+    components[1] = tmp & 0xFF; // green
+    tmp >>= 8;
+    components[0] = tmp & 0xFF; // red
+    tmp >>= 8;
+    components[3] = tmp & 0xFF; // alpha
+}
+
+
 void Blit32Bit(Pixel* dst, uint8_t* src, uint32_t width, uint32_t height)
 {
   for(int row = 0; row < height; row++) {
