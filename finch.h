@@ -93,6 +93,9 @@ void PixelComponents(Pixel pixel, uint8_t* rp, uint8_t* gp, uint8_t* bp);
 // Assign color to the pixel at (x,y) in buffer.
 void PutPixel(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y);
 
+// Get color from current pixel value at (x,y) in buffer.
+Pixel GetPixel(GraphicsBuffer* buffer, int32_t x, int32_t y);
+
 // horizontal line drawing:  x1 has to be less or same than x2
 void DrawHorzLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t x2, int32_t y);
 
