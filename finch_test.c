@@ -159,6 +159,57 @@ static bool BlitBufferTest(GraphicsBuffer *buffer)
 	return result;
 }
 
+static bool RectTest()
+{
+    /* TODO:
+     r1 = MakeRect(40, 75, 60, 100)
+     r2 = MakeRect(20, 85, 60, 105)
+     ir = IntersectRects(r1,r2)
+     
+     // our rect structure.
+     typedef struct {
+         int32_t left, top, right, bottom;
+     } LSRect;
+
+     // this checks to see if a point is in a rect.
+     int LSPointInRect( int x, int y, const LSRect r );
+     // this checks for intersection of 2 rectangles.
+     int IntersectRects( const LSRect r1, const LSRect r2, LSRect* sect );
+
+
+     */
+    LSRect r1, r2, ir;
+    r1.left = 40;
+    r1.right = 100;
+    r1.top = 75;
+    r1.bottom = 100;
+    
+    r2.left = 20;
+    r2.right = 60;
+    r2.top = 85;
+    r2.bottom = 105;
+    
+    bool intersects = IntersectRects(r1, r2, &ir);
+    if(!intersects) {
+        return false;
+    }
+    
+    if(ir.left != 40) {
+        return false;
+    }
+    if(ir.right != 60) {
+        return false;
+    }
+    if(ir.top != 85) {
+        return false;
+    }
+    if(ir.bottom != 100) {
+        return false;
+    }
+    
+    return true;
+}
+
 static bool ColorTest()
 {
     // void Color2Values(uint32_t color, uint8_t components[4])
@@ -287,6 +338,7 @@ static bool FinchTests()
 	bool good = true;
 
 	FinchUnitTest tests[] = {
+        {RectTest, "RectTest"},
         {ColorTest, "ColorTest"},
 		{PutPixelTest, "PutPixelTest"},
 		{FillRectTest, "FillRectTest"},
