@@ -115,11 +115,10 @@ static void SetWorkingDir(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-	printf("starting up\n");
 	SetWorkingDir(argc, argv);
     
 	bool good = FinchMain(argc, argv, &sUserData);
-    if(!sUserData) {
+    if(good && !sUserData) {
         fprintf(stderr, "Warning: no user data set by FinchMain!\n");
     }
 	return good ? 0 : 1;
