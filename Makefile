@@ -11,7 +11,7 @@ FLAGS += -std=c99
 
 LFLAGS+= -lm  -lpng # include math library, libm
 
-include Makefile.sdlflags
+-include Makefile.sdlflags
 
 OUTDIR = build
 DEPDIR = build/deps
