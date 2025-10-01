@@ -20,6 +20,43 @@ const RGBColor24 kBlue = {0, 0, 255};
 const uint32_t kDrawTestWidth = 80;
 const uint32_t kDrawTestHeight = 60;
 
+// ============================================================================
+// Test Helper Functions
+// ============================================================================
+
+// Helper: Clear entire buffer to specified color
+// This replaces the repetitive FillRectOpaque(buffer, AsPixel(color), 0, 0, h, w) pattern
+static void ClearBuffer(GraphicsBuffer *buffer, RGBColor24 color)
+{
+	FillRectOpaque(buffer, AsPixel(color), 0, 0, buffer->height, buffer->width);
+}
+
+// Helper: Verify pixel at coordinates matches expected color
+// Returns true if match, false if mismatch (with error message)
+static bool AssertPixelEquals(GraphicsBuffer *buffer, uint32_t x, uint32_t y,
+                              Pixel expected, const char *testName)
+{
+	Pixel actual = GetPixel(buffer, x, y);
+	if (actual != expected) {
+		fprintf(stderr, "%s: pixel at (%u,%u) mismatch - expected 0x%08X, got 0x%08X\n",
+		        testName, x, y, expected, actual);
+		return false;
+	}
+	return true;
+}
+
+// Helper: Initialize a rect with given bounds
+// Makes rect construction clearer and less verbose
+static LSRect MakeRect(int32_t left, int32_t top, int32_t right, int32_t bottom)
+{
+	LSRect r;
+	r.left = left;
+	r.top = top;
+	r.right = right;
+	r.bottom = bottom;
+	return r;
+}
+
 static bool PixelEqualNoMask(uint8_t *expected, uint8_t *actual)
 {
 	return (
@@ -80,56 +117,38 @@ static bool PutPixelPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 	return (x == kPixelX && y == kPixelY);
 }
 
+// Test: PutPixel draws a single colored pixel at specified coordinates
+// Success: One blue pixel at (kPixelX, kPixelY), rest of buffer is black
 static bool PutPixelTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
-
+	ClearBuffer(buffer, kBlack);
 	PutPixel(buffer, AsPixel(kBlue), kPixelX, kPixelY);
-
 	return CompareBufferToPredicate(buffer, PutPixelPredicate, kBlue, kBlack);
 }
 
+// Test: GetPixel reads back pixel colors correctly and handles out-of-bounds
+// Success: Reads correct colors from various positions, returns 0 for out-of-bounds
 static bool GetPixelTest(GraphicsBuffer *buffer)
 {
-	// Fill buffer with black
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+	ClearBuffer(buffer, kBlack);
 
-	// Put several different colored pixels
+	// Put several different colored pixels at known locations
 	PutPixel(buffer, AsPixel(kRed), 10, 10);
 	PutPixel(buffer, AsPixel(kGreen), 20, 20);
 	PutPixel(buffer, AsPixel(kBlue), 30, 30);
 
-	// Read them back and verify
-	Pixel p1 = GetPixel(buffer, 10, 10);
-	Pixel p2 = GetPixel(buffer, 20, 20);
-	Pixel p3 = GetPixel(buffer, 30, 30);
-	Pixel p4 = GetPixel(buffer, 15, 15);  // Should be black
+	// Read them back and verify colors match
+	if (!AssertPixelEquals(buffer, 10, 10, AsPixel(kRed), "GetPixelTest")) return false;
+	if (!AssertPixelEquals(buffer, 20, 20, AsPixel(kGreen), "GetPixelTest")) return false;
+	if (!AssertPixelEquals(buffer, 30, 30, AsPixel(kBlue), "GetPixelTest")) return false;
+	if (!AssertPixelEquals(buffer, 15, 15, AsPixel(kBlack), "GetPixelTest")) return false;
 
-	if (p1 != AsPixel(kRed)) {
-		fprintf(stderr, "GetPixel failed: expected red at (10,10)\n");
-		return false;
-	}
-	if (p2 != AsPixel(kGreen)) {
-		fprintf(stderr, "GetPixel failed: expected green at (20,20)\n");
-		return false;
-	}
-	if (p3 != AsPixel(kBlue)) {
-		fprintf(stderr, "GetPixel failed: expected blue at (30,30)\n");
-		return false;
-	}
-	if (p4 != AsPixel(kBlack)) {
-		fprintf(stderr, "GetPixel failed: expected black at (15,15)\n");
-		return false;
-	}
-
-	// Test out-of-bounds returns 0
-	Pixel p5 = GetPixel(buffer, -1, 10);
-	Pixel p6 = GetPixel(buffer, 10, -1);
-	Pixel p7 = GetPixel(buffer, buffer->width, 10);
-	Pixel p8 = GetPixel(buffer, 10, buffer->height);
-
-	if (p5 != 0 || p6 != 0 || p7 != 0 || p8 != 0) {
-		fprintf(stderr, "GetPixel failed: out-of-bounds should return 0\n");
+	// Test out-of-bounds access returns 0
+	if (GetPixel(buffer, -1, 10) != 0 ||
+	    GetPixel(buffer, 10, -1) != 0 ||
+	    GetPixel(buffer, buffer->width, 10) != 0 ||
+	    GetPixel(buffer, 10, buffer->height) != 0) {
+		fprintf(stderr, "GetPixelTest: out-of-bounds should return 0\n");
 		return false;
 	}
 
@@ -141,12 +160,12 @@ static bool FillRectPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 	return (x >= kLeft && x < kRight && y >= kTop && y < kBottom);
 }
 
+// Test: FillRectOpaque fills a rectangular region with solid color
+// Success: Rectangle from (kLeft,kTop) to (kRight,kBottom) is red, rest is black
 static bool FillRectTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
-
+	ClearBuffer(buffer, kBlack);
 	FillRectOpaque(buffer, AsPixel(kRed), kLeft, kTop, kRight, kBottom);
-
 	return CompareBufferToPredicate(buffer, FillRectPredicate, kRed, kBlack);
 }
 
@@ -156,17 +175,21 @@ static bool DrawRectPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 		   ((y == kTop || y == kBottom - 1) && (x >= kLeft && x < kRight));
 }
 
+// Test: DrawRect draws rectangle outline
+// Success: Red outline at rectangle edges, rest is black
 static bool DrawRectTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+	ClearBuffer(buffer, kBlack);
 	DrawRect(buffer, AsPixel(kRed), kLeft, kTop, kRight, kBottom);
 	return CompareBufferToPredicate(buffer, DrawRectPredicate, kRed, kBlack);
 }
 
+// Test: Rectangle drawing handles edge cases without crashing
+// Tests: zero-width, zero-height, 1x1, inverted, full-buffer, and very large rectangles
+// Success: No crashes, reasonable behavior for degenerate inputs
 static bool RectEdgeCasesTest(GraphicsBuffer *buffer)
 {
-	// Test degenerate and edge case rectangles
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+	ClearBuffer(buffer, kBlack);
 
 	// Zero-width rectangle (left == right)
 	DrawRect(buffer, AsPixel(kRed), 10, 10, 10, 20);
@@ -237,19 +260,22 @@ static bool DrawLinePredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 		   (x == y);
 }
 
+// Test: DrawLine draws a 45-degree diagonal line
+// Success: Red diagonal line from (kLineStart,kLineStart) to (kLineStop,kLineStop)
 static bool DrawLineTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+	ClearBuffer(buffer, kBlack);
 	// 45 degree line so predicate is simpler
 	DrawLine(buffer, AsPixel(kRed), kLineStart, kLineStart, kLineStop, kLineStop);
-
 	return CompareBufferToPredicate(buffer, DrawLinePredicate, kRed, kBlack);
 }
 
+// Test: DrawLine handles all line directions (8 octants plus horizontal/vertical)
+// Tests horizontal, vertical, and diagonal lines in all directions
+// Success: Lines visible in each octant without crashes
 static bool DrawLineVariantsTest(GraphicsBuffer *buffer)
 {
-	// Test all 8 octants and special cases
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+	ClearBuffer(buffer, kBlack);
 
 	// Horizontal line (y constant)
 	DrawLine(buffer, AsPixel(kRed), 10, 20, 30, 20);
@@ -587,35 +613,18 @@ static bool LSPointInRectTest()
 	return true;
 }
 
+// Test: IntersectRects correctly calculates rectangle intersections
+// Tests both intersecting and non-intersecting rectangle pairs
+// Success: Correct intersection bounds, proper detection of non-intersection
 static bool RectTest()
 {
-    /* TODO:
-     r1 = MakeRect(40, 75, 60, 100)
-     r2 = MakeRect(20, 85, 60, 105)
-     ir = IntersectRects(r1,r2)
-
-     // our rect structure.
-     typedef struct {
-         int32_t left, top, right, bottom;
-     } LSRect;
-
-     // this checks to see if a point is in a rect.
-     int LSPointInRect( int x, int y, const LSRect r );
-     // this checks for intersection of 2 rectangles.
-     int IntersectRects( const LSRect r1, const LSRect r2, LSRect* sect );
-
-
-     */
-    LSRect r1, r2, ir;
-    r1.left = 40;
-    r1.right = 100;
-    r1.top = 75;
-    r1.bottom = 100;
-
-    r2.left = 20;
-    r2.right = 60;
-    r2.top = 85;
-    r2.bottom = 105;
+    // Test case 1: Overlapping rectangles
+    // r1 = (40,75) to (100,100)
+    // r2 = (20,85) to (60,105)
+    // Expected intersection: (40,85) to (60,100)
+    LSRect r1 = MakeRect(40, 75, 100, 100);
+    LSRect r2 = MakeRect(20, 85, 60, 105);
+    LSRect ir;
 
     bool intersects = IntersectRects(r1, r2, &ir);
     if(!intersects) {
@@ -623,34 +632,20 @@ static bool RectTest()
         return false;
     }
 
-    if(ir.left != 40) {
-        fprintf(stderr, "RectTest: expected left=40, got %d\n", ir.left);
-        return false;
-    }
-    if(ir.right != 60) {
-        fprintf(stderr, "RectTest: expected right=60, got %d\n", ir.right);
-        return false;
-    }
-    if(ir.top != 85) {
-        fprintf(stderr, "RectTest: expected top=85, got %d\n", ir.top);
-        return false;
-    }
-    if(ir.bottom != 100) {
-        fprintf(stderr, "RectTest: expected bottom=100, got %d\n", ir.bottom);
+    // Verify intersection bounds
+    if(ir.left != 40 || ir.right != 60 || ir.top != 85 || ir.bottom != 100) {
+        fprintf(stderr, "RectTest: intersection mismatch - got (%d,%d,%d,%d), expected (40,85,60,100)\n",
+                ir.left, ir.top, ir.right, ir.bottom);
         return false;
     }
 
-    // Test non-intersecting rectangles
-    LSRect r3, r4, ir2;
-    r3.left = 10;
-    r3.right = 20;
-    r3.top = 10;
-    r3.bottom = 20;
-
-    r4.left = 30;
-    r4.right = 40;
-    r4.top = 30;
-    r4.bottom = 40;
+    // Test case 2: Non-intersecting rectangles
+    // r3 = (10,10) to (20,20)
+    // r4 = (30,30) to (40,40)
+    // Should not intersect
+    LSRect r3 = MakeRect(10, 10, 20, 20);
+    LSRect r4 = MakeRect(30, 30, 40, 40);
+    LSRect ir2;
 
     bool noIntersection = IntersectRects(r3, r4, &ir2);
     if(noIntersection) {
@@ -907,10 +902,11 @@ static int CircleStatus(uint32_t x, uint32_t y)
 	return status;
 }
 
+// Test: DrawCircle draws a circle outline
+// Success: Green circle outline at (kCenterX,kCenterY) with radius kRadius
 static bool CircleTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
-
+	ClearBuffer(buffer, kBlack);
 	DrawCircle(buffer, AsPixel(kGreen), kCenterX, kCenterY, kRadius);
 
 	RGBColor24 foreColor = kGreen;
@@ -954,10 +950,11 @@ static bool CircleTest(GraphicsBuffer *buffer)
 	return true;
 }
 
+// Test: FillCircle draws a filled circle
+// Success: Solid green circle at (kCenterX,kCenterY) with radius kRadius
 static bool FillCircleTest(GraphicsBuffer *buffer)
 {
-	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
-
+	ClearBuffer(buffer, kBlack);
 	FillCircle(buffer, AsPixel(kGreen), kCenterX, kCenterY, kRadius);
 
 	RGBColor24 foreColor = kGreen;
@@ -1004,11 +1001,11 @@ static bool FillCircleTest(GraphicsBuffer *buffer)
 static bool Blit32BitTest(GraphicsBuffer *buffer)
 {
 	// Test converting 32-bit RGBA byte array to Pixel format
-	const uint32_t testWidth = 4;
-	const uint32_t testHeight = 3;
+#define BLIT32_WIDTH 4
+#define BLIT32_HEIGHT 3
 
 	// Create source data: RGBA bytes (R, G, B, A for each pixel)
-	uint8_t srcData[testWidth * testHeight * 4] = {
+	uint8_t srcData[BLIT32_WIDTH * BLIT32_HEIGHT * 4] = {
 		// Row 0: solid colors with full alpha
 		255, 0, 0, 255,    // Red
 		0, 255, 0, 255,    // Green
@@ -1029,10 +1026,10 @@ static bool Blit32BitTest(GraphicsBuffer *buffer)
 	};
 
 	// Create destination buffer
-	Pixel dstData[testWidth * testHeight];
+	Pixel dstData[BLIT32_WIDTH * BLIT32_HEIGHT];
 
 	// Perform conversion
-	Blit32Bit(dstData, srcData, testWidth, testHeight);
+	Blit32Bit(dstData, srcData, BLIT32_WIDTH, BLIT32_HEIGHT);
 
 	// Verify row 0 - solid colors
 	if (dstData[0] != MakeColor(255, 0, 0)) {
@@ -1070,17 +1067,19 @@ static bool Blit32BitTest(GraphicsBuffer *buffer)
 		return false;
 	}
 
+#undef BLIT32_WIDTH
+#undef BLIT32_HEIGHT
 	return true;
 }
 
 static bool Blit24To32BitTest(GraphicsBuffer *buffer)
 {
 	// Test converting 24-bit RGB byte array to Pixel format (opaque)
-	const uint32_t testWidth = 3;
-	const uint32_t testHeight = 2;
+#define BLIT24_WIDTH 3
+#define BLIT24_HEIGHT 2
 
 	// Create source data: RGB bytes (R, G, B for each pixel, no alpha)
-	uint8_t srcData[testWidth * testHeight * 3] = {
+	uint8_t srcData[BLIT24_WIDTH * BLIT24_HEIGHT * 3] = {
 		// Row 0
 		255, 0, 0,      // Red
 		0, 255, 0,      // Green
@@ -1093,10 +1092,10 @@ static bool Blit24To32BitTest(GraphicsBuffer *buffer)
 	};
 
 	// Create destination buffer
-	Pixel dstData[testWidth * testHeight];
+	Pixel dstData[BLIT24_WIDTH * BLIT24_HEIGHT];
 
 	// Perform conversion
-	Blit24To32Bit(dstData, srcData, testWidth, testHeight);
+	Blit24To32Bit(dstData, srcData, BLIT24_WIDTH, BLIT24_HEIGHT);
 
 	// Verify all pixels - should be opaque (alpha=255)
 	if (dstData[0] != MakeColor(255, 0, 0)) {
@@ -1126,7 +1125,7 @@ static bool Blit24To32BitTest(GraphicsBuffer *buffer)
 
 	// Verify alpha channel is 255 for all pixels
 	uint8_t components[4];
-	for (int i = 0; i < testWidth * testHeight; i++) {
+	for (int i = 0; i < BLIT24_WIDTH * BLIT24_HEIGHT; i++) {
 		Color2Values(dstData[i], components);
 		if (components[3] != 255) {
 			fprintf(stderr, "Blit24To32Bit: pixel %d has alpha=%d, expected 255\n", i, components[3]);
@@ -1134,6 +1133,8 @@ static bool Blit24To32BitTest(GraphicsBuffer *buffer)
 		}
 	}
 
+#undef BLIT24_WIDTH
+#undef BLIT24_HEIGHT
 	return true;
 }
 
@@ -1272,30 +1273,44 @@ static bool FinchTests()
 	bool good = true;
 
 	FinchUnitTest tests[] = {
-        {RectTest, "RectTest"},
-        {LSPointInRectTest, "LSPointInRectTest"},
-        {ColorTest, "ColorTest"},
-        {PixelComponentsTest, "PixelComponentsTest"},
+		// Color and pixel utilities
+		{ColorTest, "ColorTest"},
+		{PixelComponentsTest, "PixelComponentsTest"},
+
+		// Basic pixel operations
 		{PutPixelTest, "PutPixelTest"},
 		{GetPixelTest, "GetPixelTest"},
+
+		// Rectangle operations
+		{RectTest, "RectTest"},
+		{LSPointInRectTest, "LSPointInRectTest"},
 		{FillRectTest, "FillRectTest"},
 		{FillRectOpaqueTest, "FillRectOpaqueTest"},
 		{DrawRectTest, "DrawRectTest"},
 		{RectEdgeCasesTest, "RectEdgeCasesTest"},
+
+		// Line drawing
 		{DrawLineTest, "DrawLineTest"},
 		{DrawLineVariantsTest, "DrawLineVariantsTest"},
+		{HorzVertLineTest, "HorzVertLineTest"},
+
+		// Circle drawing
 		{CircleTest, "CircleTest"},
 		{FillCircleTest, "FillCircleTest"},
 		{CircleEdgeCasesTest, "CircleEdgeCasesTest"},
+
+		// Blitting and compositing
 		{BlitBufferTest, "BlitBufferTest"},
 		{BlitTransparencyTest, "BlitTransparencyTest"},
 		{Blit32BitTest, "Blit32BitTest"},
 		{Blit24To32BitTest, "Blit24To32BitTest"},
-		{HorzVertLineTest, "HorzVertLineTest"},
+		{AlphaCompositingTest, "AlphaCompositingTest"},
+
+		// Buffer management and edge cases
 		{BufferStrideTest, "BufferStrideTest"},
 		{ClippingTest, "ClippingTest"},
 		{NegativeCoordTest, "NegativeCoordTest"},
-		{AlphaCompositingTest, "AlphaCompositingTest"},
+
 		{NULL, "marker"}
 	};
 
