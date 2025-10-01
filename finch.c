@@ -1,4 +1,5 @@
 #include "finch.h"
+#include "font.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -797,9 +798,77 @@ int IntersectRects( const LSRect r1, const LSRect r2, LSRect* sect )
 			sect->top = LSMax( r1.top, r2.top );
 			sect->right = LSMin( r1.right, r2.right );
 			sect->bottom = LSMin( r1.bottom, r2.bottom );
-		
+
 			return true;
 		}
 	else
 		return false;
+}
+
+// ============================================================================
+// TEXT RENDERING
+// ============================================================================
+
+void DrawChar(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y, char c)
+{
+	// Check if character is in supported range
+	if (c < FONT_FIRST_CHAR || c > FONT_LAST_CHAR) {
+		return; // Unsupported character, just skip it
+	}
+
+	// Get the font data for this character
+	int charIndex = c - FONT_FIRST_CHAR;
+	const uint8_t* charData = font8x8_basic[charIndex];
+
+	// Draw each row of the character
+	for (int row = 0; row < FONT_CHAR_HEIGHT; row++) {
+		uint8_t rowData = charData[row];
+
+		// Draw each pixel in the row
+		for (int col = 0; col < FONT_CHAR_WIDTH; col++) {
+			// Check if this pixel should be drawn (MSB is leftmost)
+			if (rowData & (1 << (7 - col))) {
+				PutPixel(buffer, color, x + col, y + row);
+			}
+		}
+	}
+}
+
+void DrawText(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y, const char* text)
+{
+	if (!text) return;
+
+	int currentX = x;
+	for (const char* p = text; *p != '\0'; p++) {
+		DrawChar(buffer, color, currentX, y, *p);
+		currentX += FONT_CHAR_WIDTH;
+	}
+}
+
+int GetTextWidth(const char* text)
+{
+	if (!text) return 0;
+
+	int length = 0;
+	for (const char* p = text; *p != '\0'; p++) {
+		length++;
+	}
+
+	return length * FONT_CHAR_WIDTH;
+}
+
+int GetTextHeight(void)
+{
+	return FONT_CHAR_HEIGHT;
+}
+
+void DrawTextCentered(GraphicsBuffer* buffer, Pixel color, int32_t centerX, int32_t centerY, const char* text)
+{
+	int width = GetTextWidth(text);
+	int height = GetTextHeight();
+
+	int x = centerX - width / 2;
+	int y = centerY - height / 2;
+
+	DrawText(buffer, color, x, y, text);
 }

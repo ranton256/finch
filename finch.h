@@ -664,4 +664,76 @@ int LSPointInRect( int x, int y, const LSRect r );
 int IntersectRects( const LSRect r1, const LSRect r2, LSRect* sect );
 
 
+// ============================================================================
+// TEXT RENDERING
+// ============================================================================
+
+/**
+ * Draw a single character at the specified position.
+ * Uses built-in 8x8 bitmap font. Supports ASCII characters 32-126.
+ *
+ * @param buffer Graphics buffer to draw in
+ * @param color Text color
+ * @param x Left edge X coordinate
+ * @param y Top edge Y coordinate
+ * @param c Character to draw (ASCII 32-126)
+ *
+ * Example:
+ *   DrawChar(screen, COLOR_WHITE, 100, 100, 'A');
+ */
+void DrawChar(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y, char c);
+
+/**
+ * Draw a text string at the specified position.
+ * Uses built-in 8x8 bitmap font. Supports ASCII characters 32-126.
+ * Characters are drawn left-to-right with no spacing between them.
+ *
+ * @param buffer Graphics buffer to draw in
+ * @param color Text color
+ * @param x Left edge X coordinate
+ * @param y Top edge Y coordinate
+ * @param text Null-terminated string to draw
+ *
+ * Example:
+ *   DrawText(screen, COLOR_GREEN, 10, 10, "Score: 1000");
+ */
+void DrawText(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y, const char* text);
+
+/**
+ * Calculate the width in pixels of a text string.
+ * Each character is 8 pixels wide.
+ *
+ * @param text Null-terminated string
+ * @return Width in pixels (length * 8)
+ *
+ * Example:
+ *   int width = GetTextWidth("Hello");  // Returns 40
+ *   DrawText(screen, COLOR_WHITE, (800 - width) / 2, 100, "Hello"); // Centered
+ */
+int GetTextWidth(const char* text);
+
+/**
+ * Get the height of text in pixels.
+ * All characters are 8 pixels tall.
+ *
+ * @return Height in pixels (always 8)
+ */
+int GetTextHeight(void);
+
+/**
+ * Draw text centered at a specific point.
+ * The text will be centered horizontally and vertically around (centerX, centerY).
+ *
+ * @param buffer Graphics buffer to draw in
+ * @param color Text color
+ * @param centerX Center point X coordinate
+ * @param centerY Center point Y coordinate
+ * @param text Null-terminated string to draw
+ *
+ * Example:
+ *   DrawTextCentered(screen, COLOR_RED, 400, 300, "GAME OVER");
+ */
+void DrawTextCentered(GraphicsBuffer* buffer, Pixel color, int32_t centerX, int32_t centerY, const char* text);
+
+
 #endif // __FINCH__

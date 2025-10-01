@@ -28,7 +28,7 @@ test: tests
 tests: $(TEST_PROG)
 	./$(TEST_PROG)
 
-COMMON_SRCS = finch.c blit.c
+COMMON_SRCS = finch.c blit.c font.c
 LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
 TEST_SRCS := finch_test.c
 MAIN_SRCS := finch_main.c
