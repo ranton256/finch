@@ -1,0 +1,30 @@
+# Documentation Preview Makefile
+# Provides easy commands for previewing GitHub Pages locally
+
+.PHONY: preview preview-docs serve-docs open-docs
+
+# Preview documentation in browser (default port 8000)
+preview: preview-docs
+
+preview-docs:
+	@echo "Starting documentation preview server..."
+	@./docs/preview.sh
+
+# Alternative: specify custom port
+# Usage: make serve-docs PORT=3000
+PORT ?= 8000
+serve-docs:
+	@echo "Starting documentation server on port $(PORT)..."
+	@cd docs && python3 -m http.server $(PORT)
+
+# Open documentation in default browser (macOS)
+open-docs:
+	@echo "Opening documentation in browser..."
+	@if command -v open &> /dev/null; then \
+		open http://localhost:8000; \
+	elif command -v xdg-open &> /dev/null; then \
+		xdg-open http://localhost:8000; \
+	else \
+		echo "Visit: http://localhost:8000"; \
+	fi
+	@./docs/preview.sh

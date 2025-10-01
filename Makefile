@@ -106,6 +106,13 @@ docs: $(SCREENSHOT_GEN)
 	./$(SCREENSHOT_GEN)
 	@echo "✓ Documentation ready in docs/"
 
+.PHONY: preview preview-docs
+preview: preview-docs
+preview-docs:
+	@echo "Starting documentation preview server..."
+	@echo "Visit: http://localhost:8000"
+	@cd docs && python3 -m http.server 8000
+
 force:
 
 $(OUTDIR)/%.o : %.c

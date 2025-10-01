@@ -4,20 +4,38 @@ This directory contains the GitHub Pages documentation site for the Finch Graphi
 
 ## Local Testing
 
-To test the site locally, you can use any static file server. For example:
+### Quick Start
+
+From the project root directory:
 
 ```bash
-# Using Python 3
-python3 -m http.server 8000
-
-# Using Python 2
-python -m SimpleHTTPServer 8000
-
-# Using Node.js http-server
-npx http-server
+make preview
 ```
 
-Then visit http://localhost:8000 in your browser.
+This will start a local web server on port 8000. Visit http://localhost:8000 in your browser.
+
+### Alternative Methods
+
+If you prefer to use other tools:
+
+```bash
+# Using the preview script directly
+./docs/preview.sh
+
+# Using the preview script on a different port
+./docs/preview.sh 3000
+
+# Using Python 3 directly
+cd docs && python3 -m http.server 8000
+
+# Using Python 2
+cd docs && python -m SimpleHTTPServer 8000
+
+# Using Node.js http-server
+cd docs && npx http-server
+```
+
+Then visit http://localhost:8000 (or your chosen port) in your browser.
 
 ## Generating Screenshots
 

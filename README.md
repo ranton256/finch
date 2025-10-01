@@ -191,6 +191,18 @@ Unit tests use a predicate-based verification approach. Each test:
 
 Run tests with `make test` or `./finch_test`.
 
+## Documentation
+
+Complete documentation is available online and locally:
+
+- **Online**: Visit the [GitHub Pages site](https://ranton.github.io/finch/) (once published)
+- **Local Preview**: Run `make preview` and visit http://localhost:8000
+
+The documentation includes:
+- **Tutorial**: Step-by-step guide from basics to building your first game
+- **API Reference**: Complete function and type documentation
+- **Examples**: Detailed walkthrough of example programs with screenshots
+
 ## License
 
 See LICENSE file for details.
