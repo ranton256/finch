@@ -206,8 +206,20 @@ static bool RectEdgeCasesTest(GraphicsBuffer *buffer)
 		return false;
 	}
 
-	// Note: inverted rectangles (right < left, bottom < top) are not tested
-	// as they cause undefined behavior in the current implementation
+	// Inverted rectangles (right < left, bottom < top) should now be handled
+	// by normalizing the coordinates
+	DrawRect(buffer, AsPixel(kRed), 30, 10, 20, 20);  // right < left
+	FillRectOpaque(buffer, AsPixel(kBlue), 40, 10, 30, 20);  // right < left
+	// Should swap coordinates and draw normally - main test is no crash
+
+	DrawRect(buffer, AsPixel(kRed), 10, 30, 20, 20);  // bottom < top
+	FillRectOpaque(buffer, AsPixel(kBlue), 10, 40, 20, 30);  // bottom < top
+	// Should swap coordinates and draw normally - main test is no crash
+
+	// Both inverted
+	DrawRect(buffer, AsPixel(kGreen), 60, 50, 50, 40);  // both inverted
+	FillRectOpaque(buffer, AsPixel(kGreen), 70, 50, 65, 45);  // both inverted
+	// Should normalize and draw - main test is no crash
 
 	// Very large rectangle
 	DrawRect(buffer, AsPixel(kWhite), -100, -100, buffer->width + 100, buffer->height + 100);

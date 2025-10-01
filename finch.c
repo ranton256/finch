@@ -492,15 +492,27 @@ void DrawLine(GraphicsBuffer *buffer, Pixel color, int32_t x1, int32_t y1, int32
 // rect drawing, does clip.
 void DrawRect(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t top, int32_t right, int32_t bottom)
 {
+	// Normalize inverted rectangles
+	if( left > right ) {
+		int32_t temp = left;
+		left = right;
+		right = temp;
+	}
+	if( top > bottom ) {
+		int32_t temp = top;
+		top = bottom;
+		bottom = temp;
+	}
+
 	// not normal for rects to include
 	// the pixels on the right and bottom edge,
 	// but the functions we call do, so dec them.
 	bottom--;
 	right--;
-	
+
 	DrawHorzLine(buffer, color, left, right, top );
 	DrawHorzLine(buffer, color, left, right, bottom );
-	
+
 	// don't draw the 4 corner pixels twice.
 	top++;
 	bottom--;
@@ -509,7 +521,7 @@ void DrawRect(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t top, in
 		DrawVertLine(buffer, color,top,bottom,left);
 		DrawVertLine(buffer, color,top,bottom,right);
 	}
-	
+
 }
 
 // rect filling, does clip.
@@ -520,7 +532,19 @@ void FillRectOpaque(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t t
 	Pixel *row;
 	int32_t width, height;
 	uint32_t rowPixels = buffer->rowPixels;
-	
+
+	// Normalize inverted rectangles
+	if( left > right ) {
+		int32_t temp = left;
+		left = right;
+		right = temp;
+	}
+	if( top > bottom ) {
+		int32_t temp = top;
+		top = bottom;
+		bottom = temp;
+	}
+
 	// check that it is on the screen
 	if( bottom >= 0 && top < buffer->height && right >= 0 && left < buffer->width)
 	{
