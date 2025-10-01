@@ -298,168 +298,64 @@ static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsPro
 	mPreference = mDy2 - mAbsDx;
 	
 	// Done with the setup, now loop.
+	// All 4 cases have identical loop logic, only coordinate transformation differs
 	long outPointX, outPointY;
 
-	switch(mSlopeCase)
+	while(1)
 	{
-		case 0: // LineIsStandardX
-			while(1)
-			{
-				// LineIsStandardX
+		// Transform coordinates based on case
+		switch(mSlopeCase)
+		{
+			case 0: // LineIsStandardX
 				outPointX = mCurrentX;
 				outPointY = mCurrentY;
-				
-				
-				if(mCurrentX < mStopX)
-				{
-					mCurrentX++;
-					if(mPreference < 0)
-						mPreference += mDy2;
-					else
-					{
-						if(mStartY < mStopY)
-							mCurrentY++;
-						else
-							mCurrentY--;
-						mPreference += mDyMinusDx2;
-					}
-				}
-				else
-				{
-					return;
-				}
-				// Put the pixel
-				if( outPointX < buffer->width
-					&& outPointY < buffer->height
-					&& outPointX >= 0
-					&& outPointY >= 0
-					)
-				{
-					dp = dest[ rowPixels*outPointY + outPointX ];
-					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
-				}
-			}
-
-			break;
-		case 1: // LineGoesBackwards
-			while(1)
-			{
-				// LineGoesBackwards
+				break;
+			case 1: // LineGoesBackwards
 				outPointX = -mCurrentX;
 				outPointY = mCurrentY;
-				
-				
-				if(mCurrentX < mStopX)
-				{
-					mCurrentX++;
-					if(mPreference < 0)
-						mPreference += mDy2;
-					else
-					{
-						if(mStartY < mStopY)
-							mCurrentY++;
-						else
-							mCurrentY--;
-						mPreference += mDyMinusDx2;
-					}
-				}
-				else
-				{
-					return;
-				}
-				// Put the pixel
-				if( outPointX < buffer->width
-					&& outPointY < buffer->height
-					&& outPointX >= 0
-					&& outPointY >= 0
-					)
-				{
-					dp = dest[ rowPixels*outPointY + outPointX ];
-					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
-				}
-			}
-
-			break;
-		case 2: // LineBigSlope
-			while(1)
-			{
-				// LineBigSlope
+				break;
+			case 2: // LineBigSlope
 				outPointX = mCurrentY;
 				outPointY = mCurrentX;
-				
-				
-				if(mCurrentX < mStopX)
-				{
-					mCurrentX++;
-					if(mPreference < 0)
-						mPreference += mDy2;
-					else
-					{
-						if(mStartY < mStopY)
-							mCurrentY++;
-						else
-							mCurrentY--;
-						mPreference += mDyMinusDx2;
-					}
-				}
-				else
-				{
-					return;
-				}
-				// Put the pixel
-				if( outPointX < buffer->width
-					&& outPointY < buffer->height
-					&& outPointX >= 0
-					&& outPointY >= 0
-					)
-				{
-					dp = dest[ rowPixels*outPointY + outPointX ];
-					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
-				}
-			}
-
-			break;
-		case 3: // LineBigSlope & LineGoesBackwards
-			while(1)
-			{
-				// LineBigSlope & LineGoesBackwards
+				break;
+			case 3: // LineBigSlope & LineGoesBackwards
 				outPointX = mCurrentY;
 				outPointY = -mCurrentX;
-				
-				
-				if(mCurrentX < mStopX)
-				{
-					mCurrentX++;
-					if(mPreference < 0)
-						mPreference += mDy2;
-					else
-					{
-						if(mStartY < mStopY)
-							mCurrentY++;
-						else
-							mCurrentY--;
-						mPreference += mDyMinusDx2;
-					}
-				}
-				else
-				{
-					return;
-				}
-				// Put the pixel
-				if( outPointX < buffer->width
-					&& outPointY < buffer->height
-					&& outPointX >= 0
-					&& outPointY >= 0
-					)
-				{
-					Pixel dp = dest[ rowPixels*outPointY + outPointX ];
-					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
-				}
-			}
+				break;
+		}
 
-			break;
-	}	
-	
+		// Check if we're done
+		if(mCurrentX >= mStopX)
+		{
+			return;
+		}
+
+		// Put the pixel with clipping
+		if( outPointX < buffer->width
+			&& outPointY < buffer->height
+			&& outPointX >= 0
+			&& outPointY >= 0
+			)
+		{
+			dp = dest[ rowPixels*outPointY + outPointX ];
+			dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
+		}
+
+		// Advance to next pixel using Bresenham
+		mCurrentX++;
+		if(mPreference < 0)
+		{
+			mPreference += mDy2;
+		}
+		else
+		{
+			if(mStartY < mStopY)
+				mCurrentY++;
+			else
+				mCurrentY--;
+			mPreference += mDyMinusDx2;
+		}
+	}
 }
 
 // General case line drawing(Bresenheim's)

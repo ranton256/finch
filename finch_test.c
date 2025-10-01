@@ -361,8 +361,32 @@ static bool DrawLineVariantsTest(GraphicsBuffer *buffer)
 		return false;
 	}
 
-	// Single pixel line (start == end) - may not be supported, skip test
-	// DrawLine(buffer, AsPixel(kWhite), 50, 50, 50, 50);
+	return true;
+}
+
+// Test: DrawLine edge cases (single point, extreme clipping)
+// Tests boundary conditions not covered by other line tests
+// Success: No crashes, reasonable behavior for edge cases
+static bool DrawLineEdgeCasesTest(GraphicsBuffer *buffer)
+{
+	ClearBuffer(buffer, kBlack);
+
+	// Single-point line (start == end)
+	// Should either draw single pixel or do nothing gracefully
+	DrawLine(buffer, AsPixel(kWhite), 50, 50, 50, 50);
+	// Don't assert specific behavior - just verify no crash
+
+	// Vertical line entering/exiting top and bottom
+	DrawLine(buffer, AsPixel(kGreen), buffer->width / 2, -10, buffer->width / 2, buffer->height + 10);
+	// Should clip to buffer boundaries
+
+	// Diagonal line, opposite direction from ClippingTest
+	DrawLine(buffer, AsPixel(kBlue), -10, buffer->height + 10, buffer->width + 10, -10);
+	// Should clip properly
+
+	// Very long horizontal line completely outside buffer
+	DrawLine(buffer, AsPixel(kRed), -1000, -100, -500, -100);
+	// Should do nothing (all pixels clipped)
 
 	return true;
 }
@@ -1292,6 +1316,7 @@ static bool FinchTests()
 		// Line drawing
 		{DrawLineTest, "DrawLineTest"},
 		{DrawLineVariantsTest, "DrawLineVariantsTest"},
+		{DrawLineEdgeCasesTest, "DrawLineEdgeCasesTest"},
 		{HorzVertLineTest, "HorzVertLineTest"},
 
 		// Circle drawing
