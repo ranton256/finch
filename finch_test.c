@@ -989,6 +989,187 @@ static bool FillCircleTest(GraphicsBuffer *buffer)
 	return true;
 }
 
+static bool Blit32BitTest(GraphicsBuffer *buffer)
+{
+	// Test converting 32-bit RGBA byte array to Pixel format
+	const uint32_t testWidth = 4;
+	const uint32_t testHeight = 3;
+
+	// Create source data: RGBA bytes (R, G, B, A for each pixel)
+	uint8_t srcData[testWidth * testHeight * 4] = {
+		// Row 0: solid colors with full alpha
+		255, 0, 0, 255,    // Red
+		0, 255, 0, 255,    // Green
+		0, 0, 255, 255,    // Blue
+		255, 255, 255, 255,// White
+
+		// Row 1: semi-transparent colors
+		128, 0, 0, 128,    // Semi-transparent red
+		0, 128, 0, 128,    // Semi-transparent green
+		0, 0, 128, 128,    // Semi-transparent blue
+		128, 128, 128, 128,// Semi-transparent gray
+
+		// Row 2: fully transparent
+		255, 0, 0, 0,      // Transparent (color should be preserved)
+		0, 255, 0, 0,
+		0, 0, 255, 0,
+		255, 255, 255, 0
+	};
+
+	// Create destination buffer
+	Pixel dstData[testWidth * testHeight];
+
+	// Perform conversion
+	Blit32Bit(dstData, srcData, testWidth, testHeight);
+
+	// Verify row 0 - solid colors
+	if (dstData[0] != MakeColor(255, 0, 0)) {
+		fprintf(stderr, "Blit32Bit row 0: expected solid red\n");
+		return false;
+	}
+	if (dstData[1] != MakeColor(0, 255, 0)) {
+		fprintf(stderr, "Blit32Bit row 0: expected solid green\n");
+		return false;
+	}
+	if (dstData[2] != MakeColor(0, 0, 255)) {
+		fprintf(stderr, "Blit32Bit row 0: expected solid blue\n");
+		return false;
+	}
+	if (dstData[3] != MakeColor(255, 255, 255)) {
+		fprintf(stderr, "Blit32Bit row 0: expected solid white\n");
+		return false;
+	}
+
+	// Verify row 1 - semi-transparent colors preserve alpha
+	if (dstData[4] != MakeColorWithAlpha(128, 0, 0, 128)) {
+		fprintf(stderr, "Blit32Bit row 1: expected semi-transparent red with alpha=128\n");
+		return false;
+	}
+	if (dstData[5] != MakeColorWithAlpha(0, 128, 0, 128)) {
+		fprintf(stderr, "Blit32Bit row 1: expected semi-transparent green with alpha=128\n");
+		return false;
+	}
+
+	// Verify row 2 - fully transparent pixels preserve alpha=0
+	uint8_t components[4];
+	Color2Values(dstData[8], components);
+	if (components[3] != 0) {
+		fprintf(stderr, "Blit32Bit row 2: expected alpha=0 for transparent pixel\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Blit24To32BitTest(GraphicsBuffer *buffer)
+{
+	// Test converting 24-bit RGB byte array to Pixel format (opaque)
+	const uint32_t testWidth = 3;
+	const uint32_t testHeight = 2;
+
+	// Create source data: RGB bytes (R, G, B for each pixel, no alpha)
+	uint8_t srcData[testWidth * testHeight * 3] = {
+		// Row 0
+		255, 0, 0,      // Red
+		0, 255, 0,      // Green
+		0, 0, 255,      // Blue
+
+		// Row 1
+		128, 64, 32,    // Custom color
+		255, 255, 0,    // Yellow
+		255, 0, 255     // Magenta
+	};
+
+	// Create destination buffer
+	Pixel dstData[testWidth * testHeight];
+
+	// Perform conversion
+	Blit24To32Bit(dstData, srcData, testWidth, testHeight);
+
+	// Verify all pixels - should be opaque (alpha=255)
+	if (dstData[0] != MakeColor(255, 0, 0)) {
+		fprintf(stderr, "Blit24To32Bit: expected opaque red\n");
+		return false;
+	}
+	if (dstData[1] != MakeColor(0, 255, 0)) {
+		fprintf(stderr, "Blit24To32Bit: expected opaque green\n");
+		return false;
+	}
+	if (dstData[2] != MakeColor(0, 0, 255)) {
+		fprintf(stderr, "Blit24To32Bit: expected opaque blue\n");
+		return false;
+	}
+	if (dstData[3] != MakeColor(128, 64, 32)) {
+		fprintf(stderr, "Blit24To32Bit: expected custom color (128,64,32)\n");
+		return false;
+	}
+	if (dstData[4] != MakeColor(255, 255, 0)) {
+		fprintf(stderr, "Blit24To32Bit: expected opaque yellow\n");
+		return false;
+	}
+	if (dstData[5] != MakeColor(255, 0, 255)) {
+		fprintf(stderr, "Blit24To32Bit: expected opaque magenta\n");
+		return false;
+	}
+
+	// Verify alpha channel is 255 for all pixels
+	uint8_t components[4];
+	for (int i = 0; i < testWidth * testHeight; i++) {
+		Color2Values(dstData[i], components);
+		if (components[3] != 255) {
+			fprintf(stderr, "Blit24To32Bit: pixel %d has alpha=%d, expected 255\n", i, components[3]);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool HorzVertLineTest(GraphicsBuffer *buffer)
+{
+	// Test direct horizontal and vertical line drawing
+	// Note: DrawHorzLine and DrawVertLine use alpha compositing,
+	// so we test basic functionality without exact pixel-by-pixel verification
+	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+
+	// Draw horizontal line in middle of buffer
+	DrawHorzLine(buffer, AsPixel(kRed), 10, 30, 15);
+	// Verify at least some pixels were drawn
+	bool foundRed = false;
+	for (int x = 10; x <= 30; x++) {
+		if (GetPixel(buffer, x, 15) == AsPixel(kRed)) {
+			foundRed = true;
+			break;
+		}
+	}
+	if (!foundRed) {
+		fprintf(stderr, "HorzVertLineTest: horizontal line not visible\n");
+		return false;
+	}
+
+	// Draw vertical line in middle of buffer
+	DrawVertLine(buffer, AsPixel(kGreen), 5, 25, 40);
+	// Verify at least some pixels were drawn
+	bool foundGreen = false;
+	for (int y = 5; y <= 25; y++) {
+		if (GetPixel(buffer, 40, y) == AsPixel(kGreen)) {
+			foundGreen = true;
+			break;
+		}
+	}
+	if (!foundGreen) {
+		fprintf(stderr, "HorzVertLineTest: vertical line not visible\n");
+		return false;
+	}
+
+	// Test clipping - lines extending beyond buffer shouldn't crash
+	DrawHorzLine(buffer, AsPixel(kWhite), -10, buffer->width + 10, 8);
+	DrawVertLine(buffer, AsPixel(kBlue), -10, buffer->height + 10, 35);
+
+	// Main success: didn't crash with clipped lines
+	return true;
+}
+
 static bool CircleEdgeCasesTest(GraphicsBuffer *buffer)
 {
 	// Test edge cases for circle drawing
@@ -1096,6 +1277,9 @@ static bool FinchTests()
 		{CircleEdgeCasesTest, "CircleEdgeCasesTest"},
 		{BlitBufferTest, "BlitBufferTest"},
 		{BlitTransparencyTest, "BlitTransparencyTest"},
+		{Blit32BitTest, "Blit32BitTest"},
+		{Blit24To32BitTest, "Blit24To32BitTest"},
+		{HorzVertLineTest, "HorzVertLineTest"},
 		{BufferStrideTest, "BufferStrideTest"},
 		{ClippingTest, "ClippingTest"},
 		{NegativeCoordTest, "NegativeCoordTest"},
