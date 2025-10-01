@@ -163,6 +163,61 @@ static bool DrawRectTest(GraphicsBuffer *buffer)
 	return CompareBufferToPredicate(buffer, DrawRectPredicate, kRed, kBlack);
 }
 
+static bool RectEdgeCasesTest(GraphicsBuffer *buffer)
+{
+	// Test degenerate and edge case rectangles
+	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+
+	// Zero-width rectangle (left == right)
+	DrawRect(buffer, AsPixel(kRed), 10, 10, 10, 20);
+	FillRectOpaque(buffer, AsPixel(kGreen), 15, 10, 15, 20);
+	// Should either draw nothing or a vertical line - main test is no crash
+
+	// Zero-height rectangle (top == bottom)
+	DrawRect(buffer, AsPixel(kBlue), 10, 25, 20, 25);
+	FillRectOpaque(buffer, AsPixel(kRed), 10, 30, 20, 30);
+	// Should either draw nothing or a horizontal line - main test is no crash
+
+	// Single-pixel rectangle (1x1)
+	DrawRect(buffer, AsPixel(kWhite), 30, 30, 31, 31);
+	FillRectOpaque(buffer, AsPixel(kWhite), 35, 30, 36, 31);
+	// Verify at least one pixel drawn
+	bool found = (GetPixel(buffer, 30, 30) == AsPixel(kWhite)) ||
+	             (GetPixel(buffer, 35, 30) == AsPixel(kWhite));
+	if (!found) {
+		fprintf(stderr, "RectEdgeCasesTest: 1x1 rect not visible\n");
+		return false;
+	}
+
+	// Rectangle exactly matching buffer dimensions
+	// DrawRect uses exclusive right/bottom, so this will be clipped
+	DrawRect(buffer, AsPixel(kGreen), 0, 0, buffer->width, buffer->height);
+	// Just verify it doesn't crash - the rect extends beyond buffer so may not draw fully
+	// Check if at least some edge pixels are drawn
+	bool foundEdge = false;
+	for (uint32_t i = 0; i < 10 && i < buffer->width; i++) {
+		if (GetPixel(buffer, i, 0) == AsPixel(kGreen)) {
+			foundEdge = true;
+			break;
+		}
+	}
+	if (!foundEdge) {
+		fprintf(stderr, "RectEdgeCasesTest: full buffer rect drew nothing\n");
+		return false;
+	}
+
+	// Note: inverted rectangles (right < left, bottom < top) are not tested
+	// as they cause undefined behavior in the current implementation
+
+	// Very large rectangle
+	DrawRect(buffer, AsPixel(kWhite), -100, -100, buffer->width + 100, buffer->height + 100);
+	FillRectOpaque(buffer, AsPixel(kWhite), -50, -50, buffer->width + 50, buffer->height + 50);
+	// Should clip properly - main test is no crash
+
+	// Main success: didn't crash with any degenerate inputs
+	return true;
+}
+
 static bool DrawLinePredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 {
 	return (x >= kLineStart && y >= kLineStart) &&
@@ -299,6 +354,71 @@ static bool BlitBufferTest(GraphicsBuffer *buffer)
 
 	DeleteGraphBuffer(buffer2);
 	return result;
+}
+
+static bool BlitTransparencyTest(GraphicsBuffer *buffer)
+{
+	// Test that BlitGraphBufferComposite properly handles transparent pixels (alpha=0)
+	// Note: BlitGraphBuffer is opaque-only, BlitGraphBufferComposite handles transparency
+
+	// Fill destination with a red and blue checkerboard pattern
+	FillRectOpaque(buffer, AsPixel(kRed), 0, 0, buffer->height, buffer->width);
+	FillRectOpaque(buffer, AsPixel(kBlue), 20, 20, 40, 40);
+
+	// Create a sprite with transparent and opaque pixels
+	uint32_t spriteWidth = 30, spriteHeight = 30;
+	GraphicsBuffer *sprite = NewGraphBuffer(NULL, spriteWidth, spriteHeight, spriteWidth,
+	                                         spriteWidth * spriteHeight * sizeof(Pixel));
+	if (!sprite) {
+		fprintf(stderr, "BlitTransparencyTest: failed to create sprite buffer\n");
+		return false;
+	}
+
+	// Fill sprite with a pattern:
+	// - Left half: fully transparent (alpha=0)
+	// - Right half: opaque green
+	for (uint32_t y = 0; y < spriteHeight; y++) {
+		for (uint32_t x = 0; x < spriteWidth; x++) {
+			if (x < spriteWidth / 2) {
+				// Transparent pixels - use MakeColorWithAlpha with alpha=0
+				PutPixel(sprite, MakeColorWithAlpha(0, 255, 0, 0), x, y);
+			} else {
+				// Opaque green pixels
+				PutPixel(sprite, MakeColor(0, 255, 0), x, y);
+			}
+		}
+	}
+
+	// Blit sprite over the checkerboard at (10, 10) using COMPOSITE version
+	// The transparent left half should NOT change the background
+	// The opaque right half should show green
+	BlitGraphBufferComposite(sprite, buffer, 10, 10);
+
+	// Check transparent region - should still show original background (red or blue)
+	Pixel p1 = GetPixel(buffer, 15, 15); // In transparent region, over red background
+	if (p1 != AsPixel(kRed)) {
+		fprintf(stderr, "BlitTransparencyTest: transparent pixel overwrote background at (15,15)\n");
+		DeleteGraphBuffer(sprite);
+		return false;
+	}
+
+	Pixel p2 = GetPixel(buffer, 20, 25); // In transparent region, over blue background
+	if (p2 != AsPixel(kBlue)) {
+		fprintf(stderr, "BlitTransparencyTest: transparent pixel overwrote background at (20,25)\n");
+		DeleteGraphBuffer(sprite);
+		return false;
+	}
+
+	// Check opaque region - should show green
+	Pixel p3 = GetPixel(buffer, 30, 15); // In opaque region
+	if (p3 != MakeColor(0, 255, 0)) {
+		fprintf(stderr, "BlitTransparencyTest: opaque pixel not drawn at (30,15)\n");
+		DeleteGraphBuffer(sprite);
+		return false;
+	}
+
+	DeleteGraphBuffer(sprite);
+	return true;
 }
 
 static bool ClippingTest(GraphicsBuffer *buffer)
@@ -869,6 +989,53 @@ static bool FillCircleTest(GraphicsBuffer *buffer)
 	return true;
 }
 
+static bool CircleEdgeCasesTest(GraphicsBuffer *buffer)
+{
+	// Test edge cases for circle drawing
+	FillRectOpaque(buffer, AsPixel(kBlack), 0, 0, buffer->height, buffer->width);
+
+	// Radius 0 - should draw nothing or single pixel at center
+	DrawCircle(buffer, AsPixel(kRed), 20, 20, 0);
+	FillCircle(buffer, AsPixel(kRed), 25, 20, 0);
+	// Don't crash is the main test here
+
+	// Radius 1 - should draw a small circle (~5 pixels)
+	DrawCircle(buffer, AsPixel(kGreen), 20, 30, 1);
+	Pixel center = GetPixel(buffer, 20, 30);
+	// Center or adjacent pixels should be green
+	bool foundGreen = (center == AsPixel(kGreen)) ||
+	                  (GetPixel(buffer, 21, 30) == AsPixel(kGreen)) ||
+	                  (GetPixel(buffer, 20, 31) == AsPixel(kGreen));
+	if (!foundGreen) {
+		fprintf(stderr, "CircleEdgeCasesTest: radius 1 circle not visible\n");
+		return false;
+	}
+
+	// Filled circle with radius 1
+	FillCircle(buffer, AsPixel(kBlue), 30, 30, 1);
+	Pixel centerFilled = GetPixel(buffer, 30, 30);
+	if (centerFilled != AsPixel(kBlue)) {
+		fprintf(stderr, "CircleEdgeCasesTest: radius 1 filled circle missing center\n");
+		return false;
+	}
+
+	// Very large circle - radius > buffer dimensions
+	// Should clip properly and not crash
+	DrawCircle(buffer, AsPixel(kWhite), buffer->width / 2, buffer->height / 2, buffer->width + 50);
+	FillCircle(buffer, AsPixel(kWhite), buffer->width / 2, buffer->height / 2, buffer->height + 50);
+
+	// Circle centered at buffer edge
+	DrawCircle(buffer, AsPixel(kRed), 0, 0, 10);
+	FillCircle(buffer, AsPixel(kGreen), buffer->width - 1, buffer->height - 1, 10);
+
+	// Circle centered outside buffer
+	DrawCircle(buffer, AsPixel(kBlue), -20, -20, 30);
+	FillCircle(buffer, AsPixel(kRed), buffer->width + 20, buffer->height + 20, 30);
+
+	// Main success: didn't crash
+	return true;
+}
+
 typedef bool (*FinchUnitTestFunc)(GraphicsBuffer *buffer);
 
 struct FinchUnitTest_t
@@ -921,11 +1088,14 @@ static bool FinchTests()
 		{FillRectTest, "FillRectTest"},
 		{FillRectOpaqueTest, "FillRectOpaqueTest"},
 		{DrawRectTest, "DrawRectTest"},
+		{RectEdgeCasesTest, "RectEdgeCasesTest"},
 		{DrawLineTest, "DrawLineTest"},
 		{DrawLineVariantsTest, "DrawLineVariantsTest"},
 		{CircleTest, "CircleTest"},
 		{FillCircleTest, "FillCircleTest"},
+		{CircleEdgeCasesTest, "CircleEdgeCasesTest"},
 		{BlitBufferTest, "BlitBufferTest"},
+		{BlitTransparencyTest, "BlitTransparencyTest"},
 		{BufferStrideTest, "BufferStrideTest"},
 		{ClippingTest, "ClippingTest"},
 		{NegativeCoordTest, "NegativeCoordTest"},
