@@ -17,23 +17,29 @@ OUTDIR = build
 DEPDIR = build/deps
 
 TEST_PROG=$(MYNAME)_test
+VISUAL_TEST_PROG=visual_test
 MAIN_PROG=$(MYNAME)
 LIB=lib$(MYNAME).a
 
 all: test build
 
-build: $(MAIN_PROG) $(TEST_PROG)
+build: $(MAIN_PROG) $(TEST_PROG) $(VISUAL_TEST_PROG)
 
 test: tests
 tests: $(TEST_PROG)
 	./$(TEST_PROG)
 
+run_visual_test: $(VISUAL_TEST_PROG)
+	./$(VISUAL_TEST_PROG)
+
 COMMON_SRCS = finch.c blit.c font.c
 LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
 TEST_SRCS := finch_test.c
+VISUAL_TEST_SRCS := visual_test.c
 MAIN_SRCS := finch_main.c
 
 TEST_OBJS := $(addprefix $(OUTDIR)/,$(TEST_SRCS:.c=.o))
+VISUAL_TEST_OBJS := $(addprefix $(OUTDIR)/,$(VISUAL_TEST_SRCS:.c=.o))
 LIB_OBJS := $(addprefix $(OUTDIR)/,$(LIB_SRCS:.c=.o))
 MAIN_OBJS := $(addprefix $(OUTDIR)/,$(MAIN_SRCS:.c=.o))
 
@@ -52,8 +58,8 @@ print:
 	@echo DEPDIR=$(DEPDIR)
 
 clean:
-	rm -f *.o $(OBJS) $(TEST_PROG) $(MAIN_PROG) $(LIB)
-	rm -f .depend gmon.out core
+	rm -f *.o $(OBJS) $(TEST_PROG) $(VISUAL_TEST_PROG) $(MAIN_PROG) $(LIB)
+	rm -f .depend gmon.out core visual_test_output.png
 	rm -Rf build/*.o
 	rm -Rf build/deps/*
 	rm -Rf build/installer/
@@ -68,6 +74,8 @@ $(MAIN_PROG): $(MAIN_OBJS) $(LIB)
 $(TEST_PROG): $(TEST_OBJS) $(LIB)
 	$(CC) $(FLAGS) $(TEST_OBJS) $(LIB) -o $(TEST_PROG) $(LFLAGS)
 
+$(VISUAL_TEST_PROG): $(VISUAL_TEST_OBJS) $(LIB)
+	$(CC) $(FLAGS) $(VISUAL_TEST_OBJS) $(LIB) -o $(VISUAL_TEST_PROG) $(LFLAGS)
 
 force:
 

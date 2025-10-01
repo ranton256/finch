@@ -52,4 +52,22 @@ Mkfile.old
 dkms.conf
 finch
 finch_test
+visual_test
 *.swp
+
+# Build directories
+build/
+
+# Font generation
+*.ttf
+*.zip
+font_old.c
+FONTLOG.txt
+
+# Test outputs
+visual_test_output.png
+
+# IDE and editor files
+.vscode/
+.claude/
+*.code-workspace
