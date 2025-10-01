@@ -53,10 +53,16 @@ dkms.conf
 finch
 finch_test
 visual_test
+visual_integration_test
 *.swp
 
 # Build directories
 build/
+
+# Example program executables
+examples/bounce
+examples/fern
+examples/text_demo
 
 # Font generation
 *.ttf
@@ -68,10 +74,20 @@ FONTLOG.txt
 visual_test_output.png
 visual_test_*.png
 
-# Reference images are tracked in git
+# Reference images are tracked in git (but not the text test output)
 !test_references/*.png
+test_references/visual_test_output.png
 
 # IDE and editor files
 .vscode/
 .claude/
 *.code-workspace
+
+# Node/npm (if present)
+node_modules/
+package-lock.json
+
+# Personal notes and temporary files
+CLAUDE.md
+testing.md
+*.md.bak
