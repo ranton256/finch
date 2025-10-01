@@ -240,7 +240,7 @@ void Render(GameState* state)
 
 bool Setup(GameState* state)
 {
-	if ( !InitSDL(SDL_INIT_AUDIO) )
+	if ( !InitSDL() )
 		return false;
 
 	state->window =CreateWindow(state->windowRect);

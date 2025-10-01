@@ -28,8 +28,9 @@ bool FinchInit(int width, int height, void* userData)
     return true;
 }
 
-void FinchCleanup()
+void FinchCleanup(void* userData)
 {
+    (void)userData;
     printf("Cleanup\n");
 }
 
