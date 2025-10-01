@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finch - Simple 2D Graphics Library for C</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Finch</h1>
+        <p>A simple C library for 2D graphics and games using SDL2</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="tutorial.html">Tutorial</a></li>
+            <li><a href="api.html">API Reference</a></li>
+            <li><a href="examples.html">Examples</a></li>
+            <li><a href="https://github.com/ranton/finch">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section>
+            <h2>What is Finch?</h2>
+            <p>
+                Finch is a small, educational C graphics library that abstracts SDL2's complexity,
+                providing a clean callback-based interface for 2D graphics programming. Perfect for
+                learning graphics fundamentals, game prototyping, and pixel art applications.
+            </p>
+        </section>
+
+        <section>
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Simple API</h3>
+                    <p>Clean, immediate-mode drawing functions. No complex setup required - just implement callbacks and start drawing.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Graphics Primitives</h3>
+                    <p>Draw pixels, lines, rectangles, and circles. Includes filled and outlined shapes with clipping.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Bitmap Font Rendering</h3>
+                    <p>Built-in retro arcade font (Press Start 2P) for text rendering without external dependencies.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Alpha Blending</h3>
+                    <p>Full support for transparency and alpha compositing. Create overlapping translucent effects.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Input Handling</h3>
+                    <p>Easy keyboard and mouse event handling through simple callback functions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Educational</h3>
+                    <p>Designed for teaching graphics programming. Complete tutorial and example programs included.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Quick Start</h2>
+            <h3>Installation</h3>
+            <pre><code># macOS (Homebrew)
+brew install sdl2 sdl2_mixer libpng
+
+# Ubuntu/Debian
+sudo apt-get install libsdl2-dev libsdl2-mixer-dev libpng-dev
+
+# Clone and build
+git clone https://github.com/ranton/finch.git
+cd finch
+make</code></pre>
+
+            <h3>Hello World</h3>
+            <pre><code>#include "finch.h"
+
+bool gDone = false;
+
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    return FinchStartGraphics(800, 600);
+}
+
+bool FinchInit(int width, int height, void* userData) {
+    return true;
+}
+
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    ClearBuffer(screen, COLOR_BLACK);
+    FillCircle(screen, COLOR_CYAN, 400, 300, 100);
+    DrawText(screen, COLOR_WHITE, 250, 250, "Hello, Finch!");
+
+    DeleteGraphBuffer(screen);
+}
+
+void FinchUpdate(void* userData, double elapsedTicks) {}
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    if (event->eventType == kInputEventType_Quit) gDone = true;
+}
+bool FinchDone(void* userData) { return gDone; }
+void FinchCleanup(void* userData) {}</code></pre>
+        </section>
+
+        <section>
+            <h2>Example Programs</h2>
+            <p>Finch includes several complete example programs demonstrating different features:</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Bounce</h3>
+                    <img src="images/example_bounce.png" alt="Bouncing balls demo" class="example-image">
+                    <p>Physics simulation with multiple bouncing balls, collision detection, and smooth animation.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>Barnsley Fern</h3>
+                    <img src="images/example_fern.png" alt="Barnsley fern fractal" class="example-image">
+                    <p>Mathematical fractal visualization using iterated function systems with gradient colors.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>Text Demo</h3>
+                    <img src="images/example_text_demo.png" alt="Text rendering demo" class="example-image">
+                    <p>Comprehensive text rendering showcase with colors, character sets, and arcade-style font.</p>
+                </div>
+            </div>
+
+            <a href="examples.html" class="button">See More Examples →</a>
+        </section>
+
+        <section>
+            <h2>Visual Integration Tests</h2>
+            <p>Finch includes comprehensive visual regression tests to ensure rendering quality:</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Primitives</h3>
+                    <img src="images/visual_test_primitives.png" alt="Basic primitives test" class="example-image">
+                </div>
+
+                <div class="feature-card">
+                    <h3>Circles</h3>
+                    <img src="images/visual_test_circles.png" alt="Circle drawing test" class="example-image">
+                </div>
+
+                <div class="feature-card">
+                    <h3>Rectangles</h3>
+                    <img src="images/visual_test_rectangles.png" alt="Rectangle drawing test" class="example-image">
+                </div>
+
+                <div class="feature-card">
+                    <h3>Lines</h3>
+                    <img src="images/visual_test_lines.png" alt="Line drawing test" class="example-image">
+                </div>
+
+                <div class="feature-card">
+                    <h3>Complex Scene</h3>
+                    <img src="images/visual_test_complex_scene.png" alt="Complex scene test" class="example-image">
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Learn More</h2>
+            <ul>
+                <li><a href="tutorial.html">Complete Tutorial</a> - Step-by-step guide from basics to building your first game</li>
+                <li><a href="api.html">API Reference</a> - Full documentation of all functions and types</li>
+                <li><a href="examples.html">Example Programs</a> - Runnable examples with source code</li>
+                <li><a href="https://github.com/ranton/finch">GitHub Repository</a> - Source code, issues, and contributions</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Finch Graphics Library © 2025 | <a href="https://github.com/ranton/finch">GitHub</a></p>
+    </footer>
+</body>
+</html>

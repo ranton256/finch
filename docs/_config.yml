@@ -1,0 +1,14 @@
+# GitHub Pages Configuration for Finch Graphics Library
+
+# Basic site info
+title: Finch Graphics Library
+description: A simple C library for 2D graphics and games using SDL2
+author: Ryan Anton
+
+# Theme (GitHub Pages default)
+theme: jekyll-theme-minimal
+
+# Exclude files from site
+exclude:
+  - README.md
+  - Makefile

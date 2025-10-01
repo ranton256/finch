@@ -19,6 +19,7 @@ DEPDIR = build/deps
 TEST_PROG=$(MYNAME)_test
 VISUAL_TEST_PROG=visual_test
 VISUAL_INTEGRATION_TEST_PROG=visual_integration_test
+SCREENSHOT_GEN=screenshot_generator
 MAIN_PROG=$(MYNAME)
 LIB=lib$(MYNAME).a
 
@@ -48,11 +49,13 @@ LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
 TEST_SRCS := finch_test.c
 VISUAL_TEST_SRCS := visual_test.c
 VISUAL_INTEGRATION_TEST_SRCS := visual_integration_test.c
+SCREENSHOT_GEN_SRCS := screenshot_generator.c
 MAIN_SRCS := finch_main.c
 
 TEST_OBJS := $(addprefix $(OUTDIR)/,$(TEST_SRCS:.c=.o))
 VISUAL_TEST_OBJS := $(addprefix $(OUTDIR)/,$(VISUAL_TEST_SRCS:.c=.o))
 VISUAL_INTEGRATION_TEST_OBJS := $(addprefix $(OUTDIR)/,$(VISUAL_INTEGRATION_TEST_SRCS:.c=.o))
+SCREENSHOT_GEN_OBJS := $(addprefix $(OUTDIR)/,$(SCREENSHOT_GEN_SRCS:.c=.o))
 LIB_OBJS := $(addprefix $(OUTDIR)/,$(LIB_SRCS:.c=.o))
 MAIN_OBJS := $(addprefix $(OUTDIR)/,$(MAIN_SRCS:.c=.o))
 
@@ -71,7 +74,7 @@ print:
 	@echo DEPDIR=$(DEPDIR)
 
 clean:
-	rm -f *.o $(OBJS) $(TEST_PROG) $(VISUAL_TEST_PROG) $(VISUAL_INTEGRATION_TEST_PROG) $(MAIN_PROG) $(LIB)
+	rm -f *.o $(OBJS) $(TEST_PROG) $(VISUAL_TEST_PROG) $(VISUAL_INTEGRATION_TEST_PROG) $(SCREENSHOT_GEN) $(MAIN_PROG) $(LIB)
 	rm -f .depend gmon.out core visual_test_output.png visual_test_*.png
 	rm -Rf build/*.o
 	rm -Rf build/deps/*
@@ -92,6 +95,16 @@ $(VISUAL_TEST_PROG): $(VISUAL_TEST_OBJS) $(LIB)
 
 $(VISUAL_INTEGRATION_TEST_PROG): $(VISUAL_INTEGRATION_TEST_OBJS) $(LIB)
 	$(CC) $(FLAGS) $(VISUAL_INTEGRATION_TEST_OBJS) $(LIB) -o $(VISUAL_INTEGRATION_TEST_PROG) $(LFLAGS)
+
+$(SCREENSHOT_GEN): $(SCREENSHOT_GEN_OBJS) $(LIB)
+	$(CC) $(FLAGS) $(SCREENSHOT_GEN_OBJS) $(LIB) -o $(SCREENSHOT_GEN) $(LFLAGS)
+
+.PHONY: docs
+docs: $(SCREENSHOT_GEN)
+	@echo "Generating documentation screenshots..."
+	@mkdir -p docs/images
+	./$(SCREENSHOT_GEN)
+	@echo "✓ Documentation ready in docs/"
 
 force:
 

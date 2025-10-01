@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial - Finch Graphics Library</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tutorial-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+        }
+        .tutorial-section:first-of-type {
+            border-top: none;
+            margin-top: 1rem;
+        }
+        .section-number {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .what-you-learned {
+            background: #e8f5e9;
+            padding: 1rem;
+            border-left: 4px solid #4caf50;
+            margin: 1.5rem 0;
+        }
+        .what-you-learned h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .diagram {
+            background: var(--code-bg);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            white-space: pre;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .important-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        .important-box strong {
+            color: #856404;
+        }
+        .dos-donts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .do-box {
+            background: #e8f5e9;
+            padding: 1rem;
+            border-left: 4px solid #4caf50;
+        }
+        .dont-box {
+            background: #ffebee;
+            padding: 1rem;
+            border-left: 4px solid #f44336;
+        }
+        @media (max-width: 768px) {
+            .dos-donts {
+                grid-template-columns: 1fr;
+            }
+        }
+        nav.tutorial-nav {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .toc {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin: 2rem 0;
+        }
+        .toc h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+        .toc ol {
+            margin-left: 1.5rem;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .project-list {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        .project-list h4 {
+            margin-top: 0.5rem;
+            color: var(--accent-color);
+        }
+        .troubleshooting {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        .troubleshooting h4 {
+            color: #d32f2f;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Finch Graphics Library Tutorial</h1>
+        <p>Learn to create 2D graphics programs and games step by step</p>
+    </header>
+
+    <nav class="tutorial-nav">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="tutorial.html">Tutorial</a></li>
+            <li><a href="api.html">API Reference</a></li>
+            <li><a href="examples.html">Examples</a></li>
+            <li><a href="https://github.com/ranton/finch">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section>
+            <p>Welcome! This tutorial will teach you how to create 2D graphics programs and games using the Finch library. Finch is a simple C library that wraps SDL2, making it easy to draw shapes, handle input, and create interactive graphics applications.</p>
+
+            <div class="toc">
+                <h2>Table of Contents</h2>
+                <ol>
+                    <li><a href="#section-1">Your First Finch Program</a></li>
+                    <li><a href="#section-2">Understanding the Callback Model</a></li>
+                    <li><a href="#section-3">Drawing Basics</a></li>
+                    <li><a href="#section-4">Color and Transparency</a></li>
+                    <li><a href="#section-5">Interactive Graphics</a></li>
+                    <li><a href="#section-6">Animation</a></li>
+                    <li><a href="#section-7">Building Your First Game</a></li>
+                </ol>
+            </div>
+        </section>
+
+        <section id="section-1" class="tutorial-section">
+            <h2><span class="section-number">1.</span> Your First Finch Program</h2>
+            <p>Let's start with the simplest possible Finch program that displays a single pixel.</p>
+
+            <h3>Minimal Program Structure</h3>
+            <p>Every Finch program needs to implement these callback functions:</p>
+
+            <pre><code>#include "finch.h"
+#include &lt;stdbool.h&gt;
+
+// Global flag to control when to quit
+bool gDone = false;
+
+// Entry point - called first
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    // Start graphics with 800x600 window
+    return FinchStartGraphics(800, 600);
+}
+
+// Initialization - called once after window is created
+bool FinchInit(int width, int height, void* userData) {
+    return true; // Return true for success
+}
+
+// Rendering - called every frame to draw
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    // Wrap the screen pixels in a GraphicsBuffer
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    // Clear screen to black
+    ClearBuffer(screen, COLOR_BLACK);
+
+    // Draw a single red pixel at (400, 300)
+    PutPixel(screen, COLOR_RED, 400, 300);
+
+    // Clean up (only the wrapper, not the pixels!)
+    DeleteGraphBuffer(screen);
+}
+
+// Update - called every frame for game logic
+void FinchUpdate(void* userData, double elapsedTicks) {
+    // Nothing to update yet
+}
+
+// Event handling - called for keyboard/mouse events
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    if (event-&gt;eventType == kInputEventType_KeyDown && event-&gt;keyCode == 'q') {
+        gDone = true;
+    }
+    if (event-&gt;eventType == kInputEventType_Quit) {
+        gDone = true;
+    }
+}
+
+// Check if we should quit
+bool FinchDone(void* userData) {
+    return gDone;
+}
+
+// Cleanup - called once before exit
+void FinchCleanup(void* userData) {
+    // Nothing to clean up yet
+}</code></pre>
+
+            <h3>Compiling and Running</h3>
+            <pre><code># Compile your program
+gcc -o myprogram myprogram.c -lfinch $(sdl2-config --cflags --libs) -lSDL2_mixer -lpng
+
+# Run it
+./myprogram</code></pre>
+
+            <p>Press 'q' to quit the program.</p>
+
+            <div class="what-you-learned">
+                <h4>What You Learned:</h4>
+                <ul>
+                    <li>The basic structure of a Finch program</li>
+                    <li>How to create a window</li>
+                    <li>How to draw a single pixel</li>
+                    <li>How to handle keyboard input to quit</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="section-2" class="tutorial-section">
+            <h2><span class="section-number">2.</span> Understanding the Callback Model</h2>
+            <p>Finch uses a <strong>callback-based architecture</strong>. You implement specific functions that Finch calls at the right times. Understanding when each callback is called is crucial.</p>
+
+            <h3>Callback Execution Order</h3>
+            <div class="diagram">1. FinchMain()
+   ↓
+   Call FinchStartGraphics() to create window
+   ↓
+2. FinchInit() - called once after window creation
+   ↓
+3. MAIN LOOP (repeats until FinchDone() returns true)
+   │
+   ├─→ FinchHandleEvent() - called for each input event
+   │
+   ├─→ FinchUpdate() - called once per frame
+   │
+   ├─→ FinchRenderProc() - called once per frame
+   │
+   └─→ FinchDone() - checked to see if we should quit
+   ↓
+4. FinchCleanup() - called once before exit</div>
+
+            <h3>GraphicsBuffer Management</h3>
+            <div class="important-box">
+                <strong>IMPORTANT:</strong> In <code>FinchRenderProc()</code>, the <code>pixels</code> parameter is the screen buffer owned by SDL2.
+            </div>
+
+            <div class="dos-donts">
+                <div class="do-box">
+                    <strong>Do:</strong>
+                    <ul>
+                        <li>✅ Create a GraphicsBuffer wrapper: <code>GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);</code></li>
+                        <li>✅ Use the wrapper for drawing: <code>PutPixel(screen, COLOR_RED, x, y);</code></li>
+                        <li>✅ Delete the wrapper when done: <code>DeleteGraphBuffer(screen);</code></li>
+                    </ul>
+                </div>
+                <div class="dont-box">
+                    <strong>Don't:</strong>
+                    <ul>
+                        <li>❌ Don't free the <code>pixels</code> array (SDL2 owns it)</li>
+                        <li>❌ Don't keep the GraphicsBuffer across frames (recreate each frame)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>User Data Pattern</h3>
+            <p>The <code>userData</code> parameter lets you pass custom data through all callbacks:</p>
+
+            <pre><code>typedef struct {
+    int playerX, playerY;
+    int score;
+} GameState;
+
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    // Allocate game state
+    GameState* state = malloc(sizeof(GameState));
+    state-&gt;playerX = 400;
+    state-&gt;playerY = 300;
+    state-&gt;score = 0;
+    *userData = state; // Store for later callbacks
+
+    return FinchStartGraphics(800, 600);
+}
+
+void FinchUpdate(void* userData, double elapsedTicks) {
+    GameState* state = (GameState*)userData;
+    state-&gt;playerX += 1; // Move player
+}
+
+void FinchCleanup(void* userData) {
+    GameState* state = (GameState*)userData;
+    free(state); // Don't forget to free!
+}</code></pre>
+        </section>
+
+        <section id="section-3" class="tutorial-section">
+            <h2><span class="section-number">3.</span> Drawing Basics</h2>
+            <p>Now let's draw various shapes and understand the coordinate system.</p>
+
+            <h3>Coordinate System</h3>
+            <p>Finch uses standard screen coordinates:</p>
+            <div class="diagram">(0,0) ────────→ X increases
+  │
+  │
+  ↓
+Y increases</div>
+
+            <ul>
+                <li>Origin (0,0) is at the <strong>top-left</strong> corner</li>
+                <li>X axis increases to the <strong>right</strong></li>
+                <li>Y axis increases <strong>downward</strong></li>
+            </ul>
+
+            <h3>Drawing Shapes</h3>
+            <pre><code>void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    // Clear to black background
+    ClearBuffer(screen, COLOR_BLACK);
+
+    // Draw individual pixels
+    PutPixel(screen, COLOR_RED, 100, 100);
+    PutPixel(screen, COLOR_GREEN, 200, 100);
+    PutPixel(screen, COLOR_BLUE, 300, 100);
+
+    // Draw lines
+    DrawLine(screen, COLOR_WHITE, 50, 150, 350, 150);      // Horizontal
+    DrawLine(screen, COLOR_YELLOW, 200, 50, 200, 250);     // Vertical
+    DrawLine(screen, COLOR_CYAN, 50, 50, 350, 250);        // Diagonal
+
+    // Draw rectangles
+    DrawRect(screen, COLOR_MAGENTA, 400, 50, 550, 150);    // Outline
+    FillRectOpaque(screen, COLOR_RED, 400, 200, 550, 300); // Filled
+
+    // Draw circles
+    DrawCircle(screen, COLOR_GREEN, 100, 400, 50);         // Outline
+    FillCircle(screen, COLOR_BLUE, 250, 400, 50);          // Filled
+
+    DeleteGraphBuffer(screen);
+}</code></pre>
+
+            <h3>Reading Pixels</h3>
+            <p>You can also read pixel values:</p>
+
+            <pre><code>// Get the color at a specific location
+Pixel color = GetPixel(screen, 100, 100);
+
+// Extract color components
+uint8_t red, green, blue;
+PixelComponents(color, &amp;red, &amp;green, &amp;blue);
+printf("Color at (100,100): R=%d G=%d B=%d\n", red, green, blue);</code></pre>
+        </section>
+
+        <section id="section-4" class="tutorial-section">
+            <h2><span class="section-number">4.</span> Color and Transparency</h2>
+            <p>Understanding colors and alpha blending is essential for creating rich graphics.</p>
+
+            <h3>Color Format</h3>
+            <p>Finch uses 32-bit RGBA colors in <code>0xAARRGGBB</code> hexadecimal format:</p>
+            <ul>
+                <li><strong>AA</strong> = Alpha (transparency): 0=transparent, 255=opaque</li>
+                <li><strong>RR</strong> = Red channel (0-255)</li>
+                <li><strong>GG</strong> = Green channel (0-255)</li>
+                <li><strong>BB</strong> = Blue channel (0-255)</li>
+            </ul>
+
+            <h3>Creating Colors</h3>
+            <pre><code>// Method 1: Use predefined constants
+Pixel red = COLOR_RED;
+Pixel blue = COLOR_BLUE;
+
+// Method 2: Create from RGB components (opaque)
+Pixel MakeColor(uint8_t r, uint8_t g, uint8_t b);
+Pixel orange = MakeColor(255, 165, 0);
+
+// Method 3: Create with custom alpha
+Pixel MakeColorWithAlpha(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+Pixel semiRed = MakeColorWithAlpha(255, 0, 0, 128); // 50% transparent red
+
+// Method 4: Direct RGBA
+Pixel LSRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+Pixel semiBlue = LSRGBA(0, 0, 255, 128);</code></pre>
+
+            <h3>Available Color Constants</h3>
+            <pre><code>COLOR_WHITE
+COLOR_BLACK
+COLOR_RED
+COLOR_GREEN
+COLOR_BLUE
+COLOR_YELLOW      // Red + Green
+COLOR_CYAN        // Green + Blue
+COLOR_MAGENTA     // Red + Blue
+COLOR_GRAY
+COLOR_DARK_GRAY
+COLOR_LIGHT_GRAY</code></pre>
+
+            <h3>Alpha Blending (Transparency)</h3>
+            <p>Some functions support alpha blending:</p>
+
+            <pre><code>void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    // Draw solid blue circle
+    FillCircle(screen, COLOR_BLUE, 300, 300, 100);
+
+    // Draw semi-transparent red circle overlapping it
+    Pixel semiRed = MakeColorWithAlpha(255, 0, 0, 128);
+
+    // DrawLineComposite blends instead of overwriting
+    DrawLineComposite(screen, semiRed, 200, 200, 400, 400);
+
+    // You can also blit transparent sprites
+    GraphicsBuffer* sprite = NewGraphBuffer(NULL, 64, 64, 64, 64*64*sizeof(Pixel));
+    // ... draw into sprite ...
+    BlitGraphBufferComposite(sprite, screen, 100, 100); // Blends sprite onto screen
+    DeleteGraphBuffer(sprite);
+
+    DeleteGraphBuffer(screen);
+}</code></pre>
+
+            <p><strong>Functions that support transparency:</strong></p>
+            <ul>
+                <li><code>DrawLineComposite()</code></li>
+                <li><code>DrawHorzLine()</code> and <code>DrawVertLine()</code> (use compositing)</li>
+                <li><code>BlitGraphBufferComposite()</code></li>
+            </ul>
+
+            <p><strong>Functions that are opaque (ignore alpha):</strong></p>
+            <ul>
+                <li><code>DrawLine()</code> (unless you use <code>DrawLineComposite</code>)</li>
+                <li><code>FillRectOpaque()</code></li>
+                <li><code>BlitGraphBuffer()</code></li>
+            </ul>
+        </section>
+
+        <section id="section-5" class="tutorial-section">
+            <h2><span class="section-number">5.</span> Interactive Graphics</h2>
+            <p>Now let's make programs respond to user input.</p>
+
+            <h3>Handling Keyboard Input</h3>
+            <pre><code>void FinchHandleEvent(InputEvent* event, void* userData) {
+    if (event-&gt;eventType == kInputEventType_KeyDown) {
+        // Check which key was pressed
+        if (event-&gt;keyCode == 'w') {
+            // W key pressed
+        }
+        if (event-&gt;keyCode == 's') {
+            // S key pressed
+        }
+        if (event-&gt;keyCode == 'a') {
+            // A key pressed
+        }
+        if (event-&gt;keyCode == 'd') {
+            // D key pressed
+        }
+
+        // Special keys
+        if (event-&gt;keyCode == 27) {  // ESC key
+            gDone = true;
+        }
+    }
+
+    if (event-&gt;eventType == kInputEventType_KeyUp) {
+        // Key was released
+    }
+
+    if (event-&gt;eventType == kInputEventType_Quit) {
+        // Window close button clicked
+        gDone = true;
+    }
+}</code></pre>
+
+            <h3>Handling Mouse Input</h3>
+            <pre><code>typedef struct {
+    int mouseX, mouseY;
+    bool isDrawing;
+} PaintState;
+
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    PaintState* state = (PaintState*)userData;
+
+    if (event-&gt;eventType == kInputEventType_MouseMove) {
+        state-&gt;mouseX = event-&gt;x;
+        state-&gt;mouseY = event-&gt;y;
+    }
+
+    if (event-&gt;eventType == kInputEventType_MouseButtonDown) {
+        if (event-&gt;button == 1) {  // Left button
+            state-&gt;isDrawing = true;
+        }
+    }
+
+    if (event-&gt;eventType == kInputEventType_MouseButtonUp) {
+        if (event-&gt;button == 1) {  // Left button
+            state-&gt;isDrawing = false;
+        }
+    }
+}
+
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    PaintState* state = (PaintState*)userData;
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    // Draw crosshair at mouse position
+    DrawLine(screen, COLOR_WHITE, state-&gt;mouseX - 10, state-&gt;mouseY,
+             state-&gt;mouseX + 10, state-&gt;mouseY);
+    DrawLine(screen, COLOR_WHITE, state-&gt;mouseX, state-&gt;mouseY - 10,
+             state-&gt;mouseX, state-&gt;mouseY + 10);
+
+    // If mouse button is down, draw
+    if (state-&gt;isDrawing) {
+        FillCircle(screen, COLOR_RED, state-&gt;mouseX, state-&gt;mouseY, 5);
+    }
+
+    DeleteGraphBuffer(screen);
+}</code></pre>
+
+            <h3>Complete Interactive Example</h3>
+            <pre><code>#include "finch.h"
+#include "input_events.h"
+#include &lt;stdbool.h&gt;
+
+typedef struct {
+    int circleX, circleY;
+} GameState;
+
+bool gDone = false;
+
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    GameState* state = malloc(sizeof(GameState));
+    state-&gt;circleX = 400;
+    state-&gt;circleY = 300;
+    *userData = state;
+    return FinchStartGraphics(800, 600);
+}
+
+bool FinchInit(int width, int height, void* userData) {
+    return true;
+}
+
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    GameState* state = (GameState*)userData;
+
+    if (event-&gt;eventType == kInputEventType_KeyDown) {
+        // Move circle with arrow keys (or WASD)
+        if (event-&gt;keyCode == 'w') state-&gt;circleY -= 10;
+        if (event-&gt;keyCode == 's') state-&gt;circleY += 10;
+        if (event-&gt;keyCode == 'a') state-&gt;circleX -= 10;
+        if (event-&gt;keyCode == 'd') state-&gt;circleX += 10;
+
+        if (event-&gt;keyCode == 'q' || event-&gt;keyCode == 27) {
+            gDone = true;
+        }
+    }
+
+    if (event-&gt;eventType == kInputEventType_Quit) {
+        gDone = true;
+    }
+}
+
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    GameState* state = (GameState*)userData;
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    ClearBuffer(screen, COLOR_BLACK);
+
+    // Draw the movable circle
+    FillCircle(screen, COLOR_CYAN, state-&gt;circleX, state-&gt;circleY, 30);
+
+    DeleteGraphBuffer(screen);
+}
+
+void FinchUpdate(void* userData, double elapsedTicks) {
+    // Nothing to update for this simple example
+}
+
+bool FinchDone(void* userData) {
+    return gDone;
+}
+
+void FinchCleanup(void* userData) {
+    free(userData);
+}</code></pre>
+        </section>
+
+        <section id="section-6" class="tutorial-section">
+            <h2><span class="section-number">6.</span> Animation</h2>
+            <p>Animation is achieved by updating positions in <code>FinchUpdate()</code> and drawing in <code>FinchRenderProc()</code>.</p>
+
+            <h3>Basic Animation Pattern</h3>
+            <pre><code>typedef struct {
+    double ballX, ballY;      // Position (use double for smooth movement)
+    double ballDX, ballDY;    // Velocity
+    double ballRadius;
+} AnimationState;
+
+void FinchUpdate(void* userData, double elapsedTicks) {
+    AnimationState* state = (AnimationState*)userData;
+
+    // Convert ticks to seconds (elapsedTicks is in milliseconds)
+    double dt = elapsedTicks / 1000.0;
+
+    // Update position based on velocity
+    state-&gt;ballX += state-&gt;ballDX * dt;
+    state-&gt;ballY += state-&gt;ballDY * dt;
+
+    // Bounce off walls
+    if (state-&gt;ballX - state-&gt;ballRadius &lt; 0 ||
+        state-&gt;ballX + state-&gt;ballRadius &gt; 800) {
+        state-&gt;ballDX = -state-&gt;ballDX;  // Reverse direction
+    }
+
+    if (state-&gt;ballY - state-&gt;ballRadius &lt; 0 ||
+        state-&gt;ballY + state-&gt;ballRadius &gt; 600) {
+        state-&gt;ballDY = -state-&gt;ballDY;
+    }
+}</code></pre>
+
+            <h3>Bouncing Ball Example</h3>
+            <pre><code>#include "finch.h"
+#include "input_events.h"
+#include &lt;stdbool.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct {
+    double x, y;          // Position
+    double dx, dy;        // Velocity (pixels per second)
+    int radius;
+    int windowWidth, windowHeight;
+} Ball;
+
+bool gDone = false;
+
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    Ball* ball = malloc(sizeof(Ball));
+    ball-&gt;x = 400;
+    ball-&gt;y = 300;
+    ball-&gt;dx = 200;   // 200 pixels/second to the right
+    ball-&gt;dy = 150;   // 150 pixels/second downward
+    ball-&gt;radius = 20;
+    *userData = ball;
+    return FinchStartGraphics(800, 600);
+}
+
+bool FinchInit(int width, int height, void* userData) {
+    Ball* ball = (Ball*)userData;
+    ball-&gt;windowWidth = width;
+    ball-&gt;windowHeight = height;
+    return true;
+}
+
+void FinchUpdate(void* userData, double elapsedTicks) {
+    Ball* ball = (Ball*)userData;
+
+    // Time step in seconds
+    double dt = elapsedTicks / 1000.0;
+
+    // Update position
+    ball-&gt;x += ball-&gt;dx * dt;
+    ball-&gt;y += ball-&gt;dy * dt;
+
+    // Bounce off left/right walls
+    if (ball-&gt;x - ball-&gt;radius &lt;= 0) {
+        ball-&gt;x = ball-&gt;radius;
+        ball-&gt;dx = -ball-&gt;dx;
+    }
+    if (ball-&gt;x + ball-&gt;radius &gt;= ball-&gt;windowWidth) {
+        ball-&gt;x = ball-&gt;windowWidth - ball-&gt;radius;
+        ball-&gt;dx = -ball-&gt;dx;
+    }
+
+    // Bounce off top/bottom walls
+    if (ball-&gt;y - ball-&gt;radius &lt;= 0) {
+        ball-&gt;y = ball-&gt;radius;
+        ball-&gt;dy = -ball-&gt;dy;
+    }
+    if (ball-&gt;y + ball-&gt;radius &gt;= ball-&gt;windowHeight) {
+        ball-&gt;y = ball-&gt;windowHeight - ball-&gt;radius;
+        ball-&gt;dy = -ball-&gt;dy;
+    }
+}
+
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    Ball* ball = (Ball*)userData;
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    ClearBuffer(screen, COLOR_BLACK);
+
+    // Draw the ball
+    FillCircle(screen, COLOR_YELLOW, (int)ball-&gt;x, (int)ball-&gt;y, ball-&gt;radius);
+
+    DeleteGraphBuffer(screen);
+}
+
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    if (event-&gt;eventType == kInputEventType_Quit ||
+        (event-&gt;eventType == kInputEventType_KeyDown && event-&gt;keyCode == 'q')) {
+        gDone = true;
+    }
+}
+
+bool FinchDone(void* userData) {
+    return gDone;
+}
+
+void FinchCleanup(void* userData) {
+    free(userData);
+}</code></pre>
+
+            <h3>Adding Gravity</h3>
+            <pre><code>void FinchUpdate(void* userData, double elapsedTicks) {
+    Ball* ball = (Ball*)userData;
+    double dt = elapsedTicks / 1000.0;
+
+    const double GRAVITY = 500.0;  // Pixels per second squared
+
+    // Apply gravity to vertical velocity
+    ball-&gt;dy += GRAVITY * dt;
+
+    // Update position
+    ball-&gt;x += ball-&gt;dx * dt;
+    ball-&gt;y += ball-&gt;dy * dt;
+
+    // Bounce off floor with energy loss
+    if (ball-&gt;y + ball-&gt;radius &gt;= ball-&gt;windowHeight) {
+        ball-&gt;y = ball-&gt;windowHeight - ball-&gt;radius;
+        ball-&gt;dy = -ball-&gt;dy * 0.8;  // Lose 20% energy on bounce
+    }
+
+    // Bounce off walls
+    if (ball-&gt;x - ball-&gt;radius &lt;= 0 || ball-&gt;x + ball-&gt;radius &gt;= ball-&gt;windowWidth) {
+        ball-&gt;dx = -ball-&gt;dx;
+    }
+}</code></pre>
+        </section>
+
+        <section id="section-7" class="tutorial-section">
+            <h2><span class="section-number">7.</span> Building Your First Game</h2>
+            <p>Let's build a simple paddle game (simplified Pong).</p>
+
+            <h3>Game Design</h3>
+            <ul>
+                <li>Ball bounces around the screen</li>
+                <li>Player controls paddle with mouse</li>
+                <li>Ball bounces off paddle</li>
+                <li>Game over if ball reaches bottom</li>
+            </ul>
+
+            <h3>Complete Game Code</h3>
+            <pre><code>#include "finch.h"
+#include "input_events.h"
+#include &lt;stdbool.h&gt;
+#include &lt;stdlib.h&gt;
+
+const int WIN_WIDTH = 800;
+const int WIN_HEIGHT = 600;
+
+typedef struct {
+    // Ball
+    double ballX, ballY;
+    double ballDX, ballDY;
+    int ballRadius;
+
+    // Paddle
+    int paddleX;
+    int paddleWidth;
+    int paddleHeight;
+    int paddleY;
+
+    // Game state
+    bool gameOver;
+    int score;
+} GameState;
+
+bool gDone = false;
+
+bool FinchMain(int argc, const char* argv[], void** userData) {
+    GameState* state = malloc(sizeof(GameState));
+
+    // Initialize ball
+    state-&gt;ballX = WIN_WIDTH / 2;
+    state-&gt;ballY = WIN_HEIGHT / 2;
+    state-&gt;ballDX = 200;
+    state-&gt;ballDY = 200;
+    state-&gt;ballRadius = 10;
+
+    // Initialize paddle
+    state-&gt;paddleX = WIN_WIDTH / 2;
+    state-&gt;paddleWidth = 100;
+    state-&gt;paddleHeight = 20;
+    state-&gt;paddleY = WIN_HEIGHT - 50;
+
+    // Initialize game state
+    state-&gt;gameOver = false;
+    state-&gt;score = 0;
+
+    *userData = state;
+    return FinchStartGraphics(WIN_WIDTH, WIN_HEIGHT);
+}
+
+bool FinchInit(int width, int height, void* userData) {
+    return true;
+}
+
+void FinchUpdate(void* userData, double elapsedTicks) {
+    GameState* state = (GameState*)userData;
+
+    if (state-&gt;gameOver) return;  // Don't update if game over
+
+    double dt = elapsedTicks / 1000.0;
+
+    // Update ball position
+    state-&gt;ballX += state-&gt;ballDX * dt;
+    state-&gt;ballY += state-&gt;ballDY * dt;
+
+    // Bounce off left/right walls
+    if (state-&gt;ballX - state-&gt;ballRadius &lt;= 0 ||
+        state-&gt;ballX + state-&gt;ballRadius &gt;= WIN_WIDTH) {
+        state-&gt;ballDX = -state-&gt;ballDX;
+    }
+
+    // Bounce off top wall
+    if (state-&gt;ballY - state-&gt;ballRadius &lt;= 0) {
+        state-&gt;ballDY = -state-&gt;ballDY;
+    }
+
+    // Check collision with paddle
+    if (state-&gt;ballY + state-&gt;ballRadius &gt;= state-&gt;paddleY &&
+        state-&gt;ballX &gt;= state-&gt;paddleX - state-&gt;paddleWidth/2 &&
+        state-&gt;ballX &lt;= state-&gt;paddleX + state-&gt;paddleWidth/2) {
+
+        state-&gt;ballDY = -state-&gt;ballDY;
+        state-&gt;score++;
+    }
+
+    // Check if ball went off bottom (game over)
+    if (state-&gt;ballY - state-&gt;ballRadius &gt; WIN_HEIGHT) {
+        state-&gt;gameOver = true;
+    }
+}
+
+void FinchRenderProc(int width, int height, uint32_t* pixels, void* userData) {
+    GameState* state = (GameState*)userData;
+    GraphicsBuffer* screen = NewGraphBuffer(pixels, width, height, width, 0);
+
+    // Clear screen
+    ClearBuffer(screen, COLOR_BLACK);
+
+    if (!state-&gt;gameOver) {
+        // Draw ball
+        FillCircle(screen, COLOR_WHITE, (int)state-&gt;ballX, (int)state-&gt;ballY,
+                   state-&gt;ballRadius);
+
+        // Draw paddle
+        FillRectOpaque(screen, COLOR_CYAN,
+                       state-&gt;paddleX - state-&gt;paddleWidth/2,
+                       state-&gt;paddleY,
+                       state-&gt;paddleX + state-&gt;paddleWidth/2,
+                       state-&gt;paddleY + state-&gt;paddleHeight);
+    } else {
+        // Draw "GAME OVER" (using rectangles to form letters - simple example)
+        // In a real game, you'd use text rendering
+        FillRectOpaque(screen, COLOR_RED, 350, 250, 450, 350);
+    }
+
+    DeleteGraphBuffer(screen);
+}
+
+void FinchHandleEvent(InputEvent* event, void* userData) {
+    GameState* state = (GameState*)userData;
+
+    if (event-&gt;eventType == kInputEventType_MouseMove) {
+        // Move paddle with mouse
+        state-&gt;paddleX = event-&gt;x;
+
+        // Clamp to screen bounds
+        if (state-&gt;paddleX - state-&gt;paddleWidth/2 &lt; 0) {
+            state-&gt;paddleX = state-&gt;paddleWidth/2;
+        }
+        if (state-&gt;paddleX + state-&gt;paddleWidth/2 &gt; WIN_WIDTH) {
+            state-&gt;paddleX = WIN_WIDTH - state-&gt;paddleWidth/2;
+        }
+    }
+
+    if (event-&gt;eventType == kInputEventType_KeyDown) {
+        // Press R to restart
+        if (event-&gt;keyCode == 'r' && state-&gt;gameOver) {
+            state-&gt;ballX = WIN_WIDTH / 2;
+            state-&gt;ballY = WIN_HEIGHT / 2;
+            state-&gt;ballDX = 200;
+            state-&gt;ballDY = 200;
+            state-&gt;gameOver = false;
+            state-&gt;score = 0;
+        }
+
+        if (event-&gt;keyCode == 'q') {
+            gDone = true;
+        }
+    }
+
+    if (event-&gt;eventType == kInputEventType_Quit) {
+        gDone = true;
+    }
+}
+
+bool FinchDone(void* userData) {
+    return gDone;
+}
+
+void FinchCleanup(void* userData) {
+    free(userData);
+}</code></pre>
+        </section>
+
+        <section class="tutorial-section">
+            <h2>Next Steps</h2>
+            <p>Congratulations! You now know the fundamentals of Finch graphics programming. Here are some ideas for expanding your skills:</p>
+
+            <div class="project-list">
+                <h3>Beginner Projects</h3>
+                <h4>1. Color Picker</h4>
+                <p>Click to change colors</p>
+                <h4>2. Simple Paint</h4>
+                <p>Draw with mouse, multiple colors</p>
+                <h4>3. Pattern Generator</h4>
+                <p>Create interesting visual patterns</p>
+                <h4>4. Screensaver</h4>
+                <p>Animated geometric shapes</p>
+            </div>
+
+            <div class="project-list">
+                <h3>Intermediate Projects</h3>
+                <h4>5. Breakout Clone</h4>
+                <p>Ball, paddle, and bricks</p>
+                <h4>6. Snake Game</h4>
+                <p>Growing snake that eats food</p>
+                <h4>7. Particle System</h4>
+                <p>Explosion effects</p>
+                <h4>8. Maze Generator</h4>
+                <p>Procedural maze drawing</p>
+            </div>
+
+            <div class="project-list">
+                <h3>Advanced Projects</h3>
+                <h4>9. Platformer</h4>
+                <p>Jump and run game</p>
+                <h4>10. Physics Simulation</h4>
+                <p>Realistic collisions</p>
+                <h4>11. Ray Tracer</h4>
+                <p>3D-style rendering</p>
+                <h4>12. Cellular Automata</h4>
+                <p>Conway's Game of Life</p>
+            </div>
+
+            <h3>Learning Resources</h3>
+            <ul>
+                <li><strong>finch.h</strong> - Read the header file for complete API documentation</li>
+                <li><strong>Example Programs</strong> - Check the <code>examples/</code> directory (if available)</li>
+                <li><strong>SDL2 Documentation</strong> - For advanced features: <a href="https://wiki.libsdl.org/" target="_blank">https://wiki.libsdl.org/</a></li>
+                <li><strong>Graphics Algorithms</strong> - Learn about Bresenham's line algorithm, scanline fill, etc.</li>
+            </ul>
+
+            <h3>Common Patterns</h3>
+
+            <h4>Pattern 1: Drawing to Off-Screen Buffer</h4>
+            <pre><code>// Create sprite buffer
+GraphicsBuffer* sprite = NewGraphBuffer(NULL, 64, 64, 64, 64*64*sizeof(Pixel));
+
+// Draw into sprite
+FillCircle(sprite, COLOR_RED, 32, 32, 30);
+
+// Draw sprite onto screen
+BlitGraphBuffer(sprite, screen, 100, 100);
+
+// Clean up
+DeleteGraphBuffer(sprite);</code></pre>
+
+            <h4>Pattern 2: Double-Buffered Drawing</h4>
+            <pre><code>// Finch automatically double-buffers, so you don't see tearing
+// Just draw normally in FinchRenderProc()</code></pre>
+
+            <h4>Pattern 3: Frame-Rate Independent Movement</h4>
+            <pre><code>void FinchUpdate(void* userData, double elapsedTicks) {
+    // Always use elapsedTicks for smooth movement
+    double dt = elapsedTicks / 1000.0;
+    playerX += playerVelocity * dt;  // Pixels per second
+}</code></pre>
+
+            <h3>Troubleshooting</h3>
+
+            <div class="troubleshooting">
+                <h4>Problem: Nothing appears on screen</h4>
+                <ul>
+                    <li>Did you call <code>ClearBuffer()</code> or draw anything?</li>
+                    <li>Did you create the GraphicsBuffer wrapper correctly?</li>
+                    <li>Did you forget to call <code>DeleteGraphBuffer()</code> at the end of FinchRenderProc()?</li>
+                </ul>
+            </div>
+
+            <div class="troubleshooting">
+                <h4>Problem: Program crashes</h4>
+                <ul>
+                    <li>Are you freeing the pixels array? (Don't! SDL2 owns it)</li>
+                    <li>Are you accessing userData before initializing it?</li>
+                    <li>Are you drawing outside buffer bounds? (Should be auto-clipped, but check)</li>
+                </ul>
+            </div>
+
+            <div class="troubleshooting">
+                <h4>Problem: Movement is jerky</h4>
+                <ul>
+                    <li>Are you using <code>elapsedTicks</code> for movement calculations?</li>
+                    <li>Convert to seconds: <code>dt = elapsedTicks / 1000.0</code></li>
+                </ul>
+            </div>
+
+            <div class="troubleshooting">
+                <h4>Problem: Colors look wrong</h4>
+                <ul>
+                    <li>Remember: 0xAARRGGBB format (alpha, red, green, blue)</li>
+                    <li>Use <code>MakeColor()</code> or constants for simplicity</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="tutorial-section">
+            <h2>Conclusion</h2>
+            <p>You've learned:</p>
+            <ul>
+                <li>✅ How to structure a Finch program</li>
+                <li>✅ The callback execution model</li>
+                <li>✅ Drawing shapes and handling colors</li>
+                <li>✅ Processing user input</li>
+                <li>✅ Creating animations</li>
+                <li>✅ Building a complete game</li>
+            </ul>
+
+            <p>Finch gives you a simple foundation for 2D graphics programming in C. The best way to learn is by building projects. Start small, experiment often, and have fun!</p>
+
+            <p style="font-size: 1.2rem; text-align: center; margin-top: 2rem;"><strong>Happy coding!</strong></p>
+        </section>
+
+        <section class="tutorial-section">
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="api.html">API Reference</a> - Complete function documentation</li>
+                <li><a href="examples.html">Examples</a> - More complete programs</li>
+                <li><a href="https://github.com/ranton/finch">GitHub Repository</a> - Source code and contributions</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Finch Graphics Library © 2025 | <a href="https://github.com/ranton/finch">GitHub</a></p>
+    </footer>
+</body>
+</html>

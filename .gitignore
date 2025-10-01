@@ -35,6 +35,7 @@
 *.i*86
 *.x86_64
 *.hex
+screenshot_generator
 
 # Debug files
 *.dSYM/
@@ -77,6 +78,9 @@ visual_test_*.png
 # Reference images are tracked in git (but not the text test output)
 !test_references/*.png
 test_references/visual_test_output.png
+
+# Documentation images are tracked in git
+!docs/images/*.png
 
 # IDE and editor files
 .vscode/

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examples - Finch Graphics Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Finch Examples</h1>
+        <p>Complete programs demonstrating Finch features</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="tutorial.html">Tutorial</a></li>
+            <li><a href="api.html">API Reference</a></li>
+            <li><a href="examples.html">Examples</a></li>
+            <li><a href="https://github.com/ranton/finch">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section>
+            <h2>Example Programs</h2>
+            <p>
+                Finch includes three complete example programs that demonstrate various graphics programming concepts.
+                Each example is designed to teach specific techniques and can be used as a starting point for your own projects.
+            </p>
+        </section>
+
+        <section>
+            <h2>1. Text Rendering Demo</h2>
+            <img src="images/example_text_demo.png" alt="Text rendering demonstration" class="example-image">
+
+            <h3>Concepts</h3>
+            <p>Text rendering, FPS counters, mouse tracking, color usage</p>
+
+            <h3>Description</h3>
+            <p>
+                A comprehensive demonstration of Finch's built-in text rendering capabilities using the Press Start 2P
+                arcade-style font. Shows all available characters, multiple colors, and practical applications like
+                FPS counters and mouse coordinate displays.
+            </p>
+
+            <h3>Features</h3>
+            <ul>
+                <li>Text drawing at fixed positions</li>
+                <li>Centered text alignment</li>
+                <li>FPS counter (updates every second)</li>
+                <li>Mouse coordinate tracking with crosshair</li>
+                <li>Full ASCII character set display (32-126)</li>
+                <li>Multiple color demonstrations</li>
+            </ul>
+
+            <h3>Controls</h3>
+            <ul>
+                <li>Move mouse to see coordinates update</li>
+                <li>Press 'q' or ESC to quit</li>
+            </ul>
+
+            <h3>Learning Goals</h3>
+            <ul>
+                <li>How to display text and debug information</li>
+                <li>Calculating text dimensions for positioning</li>
+                <li>Creating HUD (Heads-Up Display) elements</li>
+                <li>Mouse input handling</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>2. Barnsley Fern Fractal</h2>
+            <img src="images/example_fern.png" alt="Barnsley fern fractal" class="example-image">
+
+            <h3>Concepts</h3>
+            <p>Mathematical visualization, iterated function systems, fractals, gradient colors</p>
+
+            <h3>Description</h3>
+            <p>
+                Creates a beautiful fractal fern using the Barnsley Fern algorithm. This demonstrates how simple
+                mathematical rules applied repeatedly can create complex, natural-looking patterns. The fern is
+                rendered with 100,000 individual pixels, each colored with a gradient that adds depth.
+            </p>
+
+            <h3>Algorithm</h3>
+            <p>The Barnsley Fern uses four affine transformations selected randomly:</p>
+            <ul>
+                <li><strong>1%</strong> - Stem (moves toward origin)</li>
+                <li><strong>85%</strong> - Main frond (largest part of the fern)</li>
+                <li><strong>7%</strong> - Left leaflet</li>
+                <li><strong>7%</strong> - Right leaflet</li>
+            </ul>
+
+            <h3>Controls</h3>
+            <ul>
+                <li>Press 'q' or ESC to quit</li>
+            </ul>
+
+            <h3>Learning Goals</h3>
+            <ul>
+                <li>Plotting individual pixels</li>
+                <li>Creating mathematical visualizations</li>
+                <li>Using randomness in algorithms</li>
+                <li>Coordinate system transformations</li>
+                <li>Color gradients for visual effects</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. Bouncing Balls Physics Simulation</h2>
+            <img src="images/example_bounce.png" alt="Bouncing balls demo" class="example-image">
+
+            <h3>Concepts</h3>
+            <p>Physics simulation, animation, collision detection, random generation</p>
+
+            <h3>Description</h3>
+            <p>
+                An interactive physics simulation featuring multiple balls bouncing around the screen. Each ball has
+                random properties (size, position, velocity, color) and bounces realistically off the walls by
+                reversing velocity on collision. Demonstrates how to manage multiple animated objects in a game loop.
+            </p>
+
+            <h3>Features</h3>
+            <ul>
+                <li>Multiple balls (5 by default) with unique properties</li>
+                <li>Random sizes (radius 25-60 pixels)</li>
+                <li>Random starting positions</li>
+                <li>Random velocities</li>
+                <li>Realistic wall collision detection and response</li>
+                <li>Colorful visual effects with shadows and highlights</li>
+            </ul>
+
+            <h3>Controls</h3>
+            <ul>
+                <li>Press 'r' to restart with new random balls</li>
+                <li>Press 'q' or ESC to quit</li>
+            </ul>
+
+            <h3>Learning Goals</h3>
+            <ul>
+                <li>Animation and frame timing</li>
+                <li>Physics simulation (velocity, position updates)</li>
+                <li>Collision detection (wall bounces)</li>
+                <li>Managing multiple game objects</li>
+                <li>Drawing filled and outlined circles</li>
+                <li>Random number generation for variety</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Example Complexity</h2>
+            <p>The examples are ordered by increasing complexity:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Example</th>
+                        <th>Complexity</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>text_demo.c</td>
+                        <td>Beginner</td>
+                        <td>Understanding Finch callbacks and basic rendering</td>
+                    </tr>
+                    <tr>
+                        <td>fern.c</td>
+                        <td>Intermediate</td>
+                        <td>Mathematical visualization and pixel-level drawing</td>
+                    </tr>
+                    <tr>
+                        <td>bounce.c</td>
+                        <td>Advanced</td>
+                        <td>Animation, physics, and interactive controls</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Building and Running</h2>
+
+            <h3>Build All Examples</h3>
+            <pre><code>cd examples
+make all</code></pre>
+
+            <h3>Run Individual Examples</h3>
+            <pre><code>./text_demo    # Text rendering
+./fern         # Fractal visualization
+./bounce       # Physics simulation</code></pre>
+
+            <h3>Or Use Makefile</h3>
+            <pre><code>make run EXAMPLE=bounce</code></pre>
+        </section>
+
+        <section>
+            <h2>Modifying the Examples</h2>
+            <p>Each example is well-commented and designed to be modified. Try these experiments:</p>
+
+            <h3>text_demo.c</h3>
+            <ul>
+                <li>Change text colors</li>
+                <li>Add more information displays</li>
+                <li>Display additional mouse information</li>
+                <li>Create a score display for a game</li>
+            </ul>
+
+            <h3>fern.c</h3>
+            <ul>
+                <li>Adjust transformation probabilities</li>
+                <li>Change the color gradient formula</li>
+                <li>Modify scale or position</li>
+                <li>Increase MAX_ITER for more detail</li>
+                <li>Try other IFS fractals (Sierpinski triangle, etc.)</li>
+            </ul>
+
+            <h3>bounce.c</h3>
+            <ul>
+                <li>Change NUM_BALLS or ball size ranges</li>
+                <li>Add ball-to-ball collisions</li>
+                <li>Implement gravity</li>
+                <li>Create trails behind balls</li>
+                <li>Add mouse interaction (click to create balls)</li>
+                <li>Add energy loss on bounce (damping)</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Next Steps</h2>
+            <p>After exploring these examples, you can:</p>
+            <ul>
+                <li>Read the <a href="tutorial.html">complete tutorial</a> for step-by-step guidance</li>
+                <li>Check the <a href="api.html">API reference</a> for all available functions</li>
+                <li>Create your own projects using these as templates</li>
+                <li>Combine concepts from multiple examples</li>
+                <li>Share your creations with the community on <a href="https://github.com/ranton/finch">GitHub</a></li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Finch Graphics Library © 2025 | <a href="https://github.com/ranton/finch">GitHub</a></p>
+    </footer>
+</body>
+</html>
