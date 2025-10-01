@@ -86,6 +86,7 @@ test_references/visual_test_output.png
 # Node/npm (if present)
 node_modules/
 package-lock.json
+package.json
 
 # Personal notes and temporary files
 CLAUDE.md
