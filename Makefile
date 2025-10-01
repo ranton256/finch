@@ -36,6 +36,13 @@ run_visual_test: $(VISUAL_TEST_PROG)
 run_visual_integration_test: $(VISUAL_INTEGRATION_TEST_PROG)
 	./$(VISUAL_INTEGRATION_TEST_PROG)
 
+generate_reference_images: $(VISUAL_INTEGRATION_TEST_PROG)
+	@echo "Generating reference images..."
+	@mkdir -p test_references
+	./$(VISUAL_INTEGRATION_TEST_PROG)
+	@cp visual_test_*.png test_references/
+	@echo "✓ Reference images saved to test_references/"
+
 COMMON_SRCS = finch.c blit.c font.c
 LIB_SRCS :=  $(COMMON_SRCS) sound.c sdl2main.c
 TEST_SRCS := finch_test.c

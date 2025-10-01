@@ -66,6 +66,10 @@ FONTLOG.txt
 
 # Test outputs
 visual_test_output.png
+visual_test_*.png
+
+# Reference images are tracked in git
+!test_references/*.png
 
 # IDE and editor files
 .vscode/

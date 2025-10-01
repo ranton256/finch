@@ -25,6 +25,150 @@
 #define TEST_WIDTH 800
 #define TEST_HEIGHT 600
 
+// Reference images directory
+#define REFERENCE_DIR "test_references/"
+
+// Pixel comparison tolerance (allow small differences for rounding/AA)
+#define PIXEL_TOLERANCE 2
+#define MAX_DIFFERENT_PIXELS_PERCENT 0.1  // Allow 0.1% of pixels to differ
+
+// Load PNG file into a buffer
+static GraphicsBuffer* LoadPNG(const char* filename)
+{
+    FILE* fp = fopen(filename, "rb");
+    if (!fp) {
+        return NULL;
+    }
+
+    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png) {
+        fclose(fp);
+        return NULL;
+    }
+
+    png_infop info = png_create_info_struct(png);
+    if (!info) {
+        png_destroy_read_struct(&png, NULL, NULL);
+        fclose(fp);
+        return NULL;
+    }
+
+    if (setjmp(png_jmpbuf(png))) {
+        png_destroy_read_struct(&png, &info, NULL);
+        fclose(fp);
+        return NULL;
+    }
+
+    png_init_io(png, fp);
+    png_read_info(png, info);
+
+    int width = png_get_image_width(png, info);
+    int height = png_get_image_height(png, info);
+    png_byte color_type = png_get_color_type(png, info);
+    png_byte bit_depth = png_get_bit_depth(png, info);
+
+    // Convert to RGBA if needed
+    if (bit_depth == 16)
+        png_set_strip_16(png);
+    if (color_type == PNG_COLOR_TYPE_PALETTE)
+        png_set_palette_to_rgb(png);
+    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+        png_set_expand_gray_1_2_4_to_8(png);
+    if (png_get_valid(png, info, PNG_INFO_tRNS))
+        png_set_tRNS_to_alpha(png);
+    if (color_type == PNG_COLOR_TYPE_RGB ||
+        color_type == PNG_COLOR_TYPE_GRAY ||
+        color_type == PNG_COLOR_TYPE_PALETTE)
+        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+    if (color_type == PNG_COLOR_TYPE_GRAY ||
+        color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+        png_set_gray_to_rgb(png);
+
+    png_read_update_info(png, info);
+
+    // Allocate buffer
+    uint32_t* pixels = (uint32_t*)malloc(width * height * sizeof(uint32_t));
+    if (!pixels) {
+        png_destroy_read_struct(&png, &info, NULL);
+        fclose(fp);
+        return NULL;
+    }
+
+    // Read image
+    png_bytep* row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+    for (int y = 0; y < height; y++) {
+        row_pointers[y] = (png_bytep)(pixels + y * width);
+    }
+
+    png_read_image(png, row_pointers);
+    free(row_pointers);
+
+    png_destroy_read_struct(&png, &info, NULL);
+    fclose(fp);
+
+    return NewGraphBuffer(pixels, width, height, width, 0);
+}
+
+// Compare two pixels with tolerance
+static bool PixelsMatch(Pixel p1, Pixel p2, int tolerance)
+{
+    uint8_t* c1 = (uint8_t*)&p1;
+    uint8_t* c2 = (uint8_t*)&p2;
+
+    for (int i = 0; i < 4; i++) {
+        int diff = abs(c1[i] - c2[i]);
+        if (diff > tolerance) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Compare two buffers and return difference statistics
+static bool CompareBuffers(GraphicsBuffer* actual, GraphicsBuffer* expected,
+                          int* outDifferentPixels, int* outMaxDiff)
+{
+    if (!actual || !expected) {
+        return false;
+    }
+
+    if (actual->width != expected->width || actual->height != expected->height) {
+        fprintf(stderr, "Size mismatch: actual %dx%d vs expected %dx%d\n",
+                actual->width, actual->height, expected->width, expected->height);
+        return false;
+    }
+
+    int differentPixels = 0;
+    int maxDiff = 0;
+
+    for (uint32_t y = 0; y < actual->height; y++) {
+        for (uint32_t x = 0; x < actual->width; x++) {
+            Pixel actualPixel = GetPixel(actual, x, y);
+            Pixel expectedPixel = GetPixel(expected, x, y);
+
+            if (!PixelsMatch(actualPixel, expectedPixel, PIXEL_TOLERANCE)) {
+                differentPixels++;
+
+                // Calculate max difference for diagnostics
+                uint8_t* c1 = (uint8_t*)&actualPixel;
+                uint8_t* c2 = (uint8_t*)&expectedPixel;
+                for (int i = 0; i < 4; i++) {
+                    int diff = abs(c1[i] - c2[i]);
+                    if (diff > maxDiff) maxDiff = diff;
+                }
+            }
+        }
+    }
+
+    *outDifferentPixels = differentPixels;
+    *outMaxDiff = maxDiff;
+
+    int totalPixels = actual->width * actual->height;
+    double diffPercent = (100.0 * differentPixels) / totalPixels;
+
+    return diffPercent <= MAX_DIFFERENT_PIXELS_PERCENT;
+}
+
 // Helper to save buffer as PNG
 static bool SavePNG(const char* filename, GraphicsBuffer* buffer)
 {
@@ -94,13 +238,65 @@ static void DeleteTestBuffer(GraphicsBuffer* buffer)
     }
 }
 
-// Test 1: Basic drawing primitives
-static bool TestBasicPrimitives(void)
+// Helper to run test with verification
+static bool RunTestWithVerification(const char* testName,
+                                    void (*renderFunc)(GraphicsBuffer*),
+                                    const char* outputFilename)
 {
-    printf("Testing basic drawing primitives...\n");
+    printf("Testing %s...\n", testName);
 
+    // Create buffer and render
     GraphicsBuffer* buffer = CreateTestBuffer();
     if (!buffer) return false;
+
+    renderFunc(buffer);
+
+    // Save output
+    bool saved = SavePNG(outputFilename, buffer);
+    if (!saved) {
+        DeleteTestBuffer(buffer);
+        return false;
+    }
+
+    printf("  ✓ Saved %s\n", outputFilename);
+
+    // Try to load reference image
+    char refPath[256];
+    snprintf(refPath, sizeof(refPath), "%s%s", REFERENCE_DIR, outputFilename);
+
+    GraphicsBuffer* reference = LoadPNG(refPath);
+    if (!reference) {
+        printf("  ⚠ No reference image found at %s\n", refPath);
+        printf("    Run 'make generate_reference_images' to create references\n");
+        DeleteTestBuffer(buffer);
+        return true; // Pass if no reference exists yet
+    }
+
+    // Compare with reference
+    int differentPixels = 0;
+    int maxDiff = 0;
+    bool matches = CompareBuffers(buffer, reference, &differentPixels, &maxDiff);
+
+    if (matches) {
+        printf("  ✓ Matches reference image\n");
+    } else {
+        int totalPixels = buffer->width * buffer->height;
+        double diffPercent = (100.0 * differentPixels) / totalPixels;
+        printf("  ✗ Does NOT match reference:\n");
+        printf("    Different pixels: %d/%d (%.2f%%)\n",
+               differentPixels, totalPixels, diffPercent);
+        printf("    Max channel diff: %d\n", maxDiff);
+    }
+
+    DeleteTestBuffer(buffer);
+    DeleteTestBuffer(reference);
+
+    return matches;
+}
+
+// Render function for basic primitives test
+static void RenderBasicPrimitives(GraphicsBuffer* buffer)
+{
 
     // Dark background
     ClearBuffer(buffer, 0xFF202020);
@@ -156,23 +352,19 @@ static bool TestBasicPrimitives(void)
     Pixel semiTransBlue = AsPixelWithAlpha(semiBlue, 128);
     FillRectOpaque(buffer, semiTransBlue, 570, 215, 670, 265);
 
-    bool result = SavePNG("visual_test_primitives.png", buffer);
-    DeleteTestBuffer(buffer);
-
-    if (result) {
-        printf("  ✓ Saved visual_test_primitives.png\n");
-    }
-    return result;
 }
 
-// Test 2: Circles
-static bool TestCircles(void)
+// Test wrapper for basic primitives
+static bool TestBasicPrimitives(void)
 {
-    printf("Testing circle drawing...\n");
+    return RunTestWithVerification("basic drawing primitives",
+                                  RenderBasicPrimitives,
+                                  "visual_test_primitives.png");
+}
 
-    GraphicsBuffer* buffer = CreateTestBuffer();
-    if (!buffer) return false;
-
+// Render function for circles test
+static void RenderCircles(GraphicsBuffer* buffer)
+{
     ClearBuffer(buffer, 0xFF202020);
 
     DrawTextCentered(buffer, COLOR_WHITE, TEST_WIDTH / 2, 20, "CIRCLE DRAWING");
@@ -218,24 +410,19 @@ static bool TestCircles(void)
     for (int r = 10; r <= 50; r += 10) {
         DrawCircle(buffer, COLOR_LIGHT_GRAY, 100, 510, r);
     }
-
-    bool result = SavePNG("visual_test_circles.png", buffer);
-    DeleteTestBuffer(buffer);
-
-    if (result) {
-        printf("  ✓ Saved visual_test_circles.png\n");
-    }
-    return result;
 }
 
-// Test 3: Rectangles and clipping
-static bool TestRectangles(void)
+// Test wrapper for circles
+static bool TestCircles(void)
 {
-    printf("Testing rectangles and clipping...\n");
+    return RunTestWithVerification("circle drawing",
+                                  RenderCircles,
+                                  "visual_test_circles.png");
+}
 
-    GraphicsBuffer* buffer = CreateTestBuffer();
-    if (!buffer) return false;
-
+// Render function for rectangles test
+static void RenderRectangles(GraphicsBuffer* buffer)
+{
     ClearBuffer(buffer, 0xFF202020);
 
     DrawTextCentered(buffer, COLOR_WHITE, TEST_WIDTH / 2, 20, "RECTANGLES AND CLIPPING");
@@ -278,24 +465,19 @@ static bool TestRectangles(void)
                     420 + x * 20, 350 + y * 20);
         }
     }
-
-    bool result = SavePNG("visual_test_rectangles.png", buffer);
-    DeleteTestBuffer(buffer);
-
-    if (result) {
-        printf("  ✓ Saved visual_test_rectangles.png\n");
-    }
-    return result;
 }
 
-// Test 4: Lines at various angles
-static bool TestLines(void)
+// Test wrapper for rectangles
+static bool TestRectangles(void)
 {
-    printf("Testing line drawing at various angles...\n");
+    return RunTestWithVerification("rectangles and clipping",
+                                  RenderRectangles,
+                                  "visual_test_rectangles.png");
+}
 
-    GraphicsBuffer* buffer = CreateTestBuffer();
-    if (!buffer) return false;
-
+// Render function for lines test
+static void RenderLines(GraphicsBuffer* buffer)
+{
     ClearBuffer(buffer, 0xFF202020);
 
     DrawTextCentered(buffer, COLOR_WHITE, TEST_WIDTH / 2, 20, "LINE DRAWING - ALL ANGLES");
@@ -344,24 +526,19 @@ static bool TestLines(void)
     DrawLine(buffer, COLOR_MAGENTA, ox, oy, ox - 50, oy + 30);// 225°
     DrawLine(buffer, COLOR_WHITE, ox, oy, ox, oy + 60);       // 270°
     DrawLine(buffer, COLOR_LIGHT_GRAY, ox, oy, ox + 50, oy + 30); // 315°
-
-    bool result = SavePNG("visual_test_lines.png", buffer);
-    DeleteTestBuffer(buffer);
-
-    if (result) {
-        printf("  ✓ Saved visual_test_lines.png\n");
-    }
-    return result;
 }
 
-// Test 5: Complex scene combining all primitives
-static bool TestComplexScene(void)
+// Test wrapper for lines
+static bool TestLines(void)
 {
-    printf("Testing complex scene with all primitives...\n");
+    return RunTestWithVerification("line drawing at various angles",
+                                  RenderLines,
+                                  "visual_test_lines.png");
+}
 
-    GraphicsBuffer* buffer = CreateTestBuffer();
-    if (!buffer) return false;
-
+// Render function for complex scene test
+static void RenderComplexScene(GraphicsBuffer* buffer)
+{
     // Sky gradient
     for (int y = 0; y < TEST_HEIGHT / 2; y++) {
         RGBColor24 sky = {
@@ -423,14 +600,14 @@ static bool TestComplexScene(void)
         DrawLine(buffer, COLOR_BLACK, bx, by, bx + 10, by - 8);
         DrawLine(buffer, COLOR_BLACK, bx + 10, by - 8, bx + 20, by);
     }
+}
 
-    bool result = SavePNG("visual_test_complex_scene.png", buffer);
-    DeleteTestBuffer(buffer);
-
-    if (result) {
-        printf("  ✓ Saved visual_test_complex_scene.png\n");
-    }
-    return result;
+// Test wrapper for complex scene
+static bool TestComplexScene(void)
+{
+    return RunTestWithVerification("complex scene with all primitives",
+                                  RenderComplexScene,
+                                  "visual_test_complex_scene.png");
 }
 
 int main(int argc, char* argv[])
