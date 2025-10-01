@@ -65,6 +65,7 @@ GraphicsBuffer *NewGraphBuffer(
 		buffer->ownsPtr = true;
 		if( !(buffer->ptr ) ) {
             fprintf(stderr,"Not enough memory for graphics buffer pixels.\n");
+            free(buffer);
             return NULL;
         }
 		memset(buffer->ptr, 0, size);
@@ -200,13 +201,14 @@ void DrawVertLine(GraphicsBuffer *buffer, Pixel color, int32_t y1, int32_t y2, i
 		int32_t count = y2 - y1 + 1;
 		while(count--)
 		{
-			// *pix = color;
 			*pix = LSCompositePixels( color, *pix );
 			pix += rowPixels;
 		}
 	}
 }
 
+// Bresenham's line drawing algorithm with alpha compositing
+// Handles all 8 octants by classifying lines into 4 cases based on slope and direction
 static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsProc compositeFunc, int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
 	// These constants are only used inside this function.
@@ -321,23 +323,18 @@ static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsPro
 							mCurrentY--;
 						mPreference += mDyMinusDx2;
 					}
-						// the next point is xk, yk
-					//return true; // yes there is another point after this one
 				}
 				else
 				{
-					// we're done.
 					return;
 				}
-				// now, put the pixel there.
-				if( outPointX < buffer->width 
+				// Put the pixel
+				if( outPointX < buffer->width
 					&& outPointY < buffer->height
 					&& outPointX >= 0
 					&& outPointY >= 0
 					)
 				{
-					// dest[ rowPixels*outPointY + outPointX ] = color;
-					// Composite values.
 					dp = dest[ rowPixels*outPointY + outPointX ];
 					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
 				}
@@ -365,22 +362,18 @@ static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsPro
 							mCurrentY--;
 						mPreference += mDyMinusDx2;
 					}
-						// the next point is xk, yk
-					//return true; // yes there is another point after this one
 				}
 				else
 				{
-					// we're done.
 					return;
 				}
-				// now, put the pixel there.
-				if( outPointX < buffer->width 
+				// Put the pixel
+				if( outPointX < buffer->width
 					&& outPointY < buffer->height
 					&& outPointX >= 0
 					&& outPointY >= 0
 					)
 				{
-					// dest[ rowPixels*outPointY + outPointX ] = color;
 					dp = dest[ rowPixels*outPointY + outPointX ];
 					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
 				}
@@ -408,22 +401,18 @@ static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsPro
 							mCurrentY--;
 						mPreference += mDyMinusDx2;
 					}
-						// the next point is xk, yk
-					//return true; // yes there is another point after this one
 				}
 				else
 				{
-					// we're done.
 					return;
 				}
-				// now, put the pixel there.
-				if( outPointX < buffer->width 
+				// Put the pixel
+				if( outPointX < buffer->width
 					&& outPointY < buffer->height
 					&& outPointX >= 0
 					&& outPointY >= 0
 					)
 				{
-					// dest[ rowPixels*outPointY + outPointX ] = color;
 					dp = dest[ rowPixels*outPointY + outPointX ];
 					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
 				}
@@ -451,22 +440,18 @@ static void LSDrawLineCB(GraphicsBuffer *buffer, Pixel color, CompositePixelsPro
 							mCurrentY--;
 						mPreference += mDyMinusDx2;
 					}
-						// the next point is xk, yk
-					//return true; // yes there is another point after this one
 				}
 				else
 				{
-					// we're done.
 					return;
 				}
-				// now, put the pixel there.
-				if( outPointX < buffer->width 
+				// Put the pixel
+				if( outPointX < buffer->width
 					&& outPointY < buffer->height
 					&& outPointX >= 0
 					&& outPointY >= 0
 					)
 				{
-					// dest[ rowPixels*outPointY + outPointX ] = color;
 					Pixel dp = dest[ rowPixels*outPointY + outPointX ];
 					dest[ rowPixels*outPointY + outPointX ] = compositeFunc( color, dp );
 				}
@@ -577,12 +562,12 @@ void FillRectOpaque(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t t
 
 // no transparency version
 #define LSSetPixelOpaque(buffer,x,y,color) \
-	if(x<buffer->width && y<buffer->height && x>0 && y>0) \
+	if(x<buffer->width && y<buffer->height && x>=0 && y>=0) \
 		{ buffer->ptr[(buffer->rowPixels)*(y)+(x)] = (color); }
 
 // handles transparency
 #define LSSetPixel(buffer,x,y,color) \
-	if(x<buffer->width && y<buffer->height && x>0 && y>0) \
+	if(x<buffer->width && y<buffer->height && x>=0 && y>=0) \
 		{ buffer->ptr[(buffer->rowPixels)*(y)+(x)] = LSCompositePixels((color), buffer->ptr[(buffer->rowPixels)*(y)+(x)]); }
 
 
@@ -600,9 +585,11 @@ void FillRectOpaque(GraphicsBuffer *buffer, Pixel color, int32_t left, int32_t t
 
 
 
-// Draw a circle
+// Draw a circle using midpoint circle algorithm (Bresenham-style)
+// Calculates one octant and uses 8-way symmetry to plot all 8 octants
 void DrawCircle(GraphicsBuffer *buffer, Pixel color, int32_t xCenter, int32_t yCenter, int32_t radius)
 {
+	// Midpoint circle algorithm:
 	// f_circle(x,y) = x*x + y*y - r*r
 	// negative if interior, positive if outside, 0 if on boundary.
 	
@@ -712,25 +699,20 @@ void BlitGraphBuffer(
 	if( xDestLoc >= destBuffer->width ||
 		yDestLoc >= destBuffer->height )
 	{
-		// RqDebug("clipping image 1");
 		return;
 	}
-	
-	//clip.left = (xDestLoc < 0) ? 0 : xDestLoc;
+
 	if( xDestLoc < 0 )
 	{
 		src += (-xDestLoc);
-		// xDestLoc = 0;
 		clip.left = 0;
 	}
 	else
 		clip.left = xDestLoc;
-	
-	//clip.top = (yDestLoc < 0) ? 0 : yDestLoc;
+
 	if( yDestLoc < 0 )
 	{
 		src += (-yDestLoc) * srcBuffer->rowPixels;
-		// yDestLoc = 0;
 		clip.top = 0;
 	}
 	else
@@ -749,7 +731,6 @@ void BlitGraphBuffer(
 	if( clip.right <= 0 ||
 		clip.bottom <= 0 )
 	{
-		// RqDebug("clipping image 2");
 		return;
 	}
 	
@@ -805,22 +786,18 @@ void BlitGraphBufferComposite(
 	{
 		return;
 	}
-	
-	//clip.left = (xDestLoc < 0) ? 0 : xDestLoc;
+
 	if( xDestLoc < 0 )
 	{
 		src += (-xDestLoc);
-		// xDestLoc = 0;
 		clip.left = 0;
 	}
 	else
 		clip.left = xDestLoc;
-	
-	//clip.top = (yDestLoc < 0) ? 0 : yDestLoc;
+
 	if( yDestLoc < 0 )
 	{
 		src += (-yDestLoc) * srcBuffer->rowPixels;
-		// yDestLoc = 0;
 		clip.top = 0;
 	}
 	else
