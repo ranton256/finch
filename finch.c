@@ -98,9 +98,9 @@ void DeleteGraphBuffer( GraphicsBuffer *buffer )
 void PixelComponents(Pixel pixel, uint8_t* rp, uint8_t* gp, uint8_t* bp)
 {
 	assert(rp); assert(gp); assert(bp);
-	*rp = (pixel >> 24) & 0xff;
-	*gp = (pixel >> 16) & 0xff;
-	*bp = (pixel >> 8) & 0xff;
+	*rp = (pixel >> 16) & 0xff;
+	*gp = (pixel >> 8) & 0xff;
+	*bp = (pixel >> 0) & 0xff;
 }
 
 // this composites to 8 bit channel values using an alpha
