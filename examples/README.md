@@ -162,7 +162,7 @@ Each example is well-commented and designed to be modified. Try:
 
 - See TUTORIAL.md in the parent directory for a complete Finch programming guide
 - See finch.h for full API documentation
-- Visit the [project repository](https://github.com/yourusername/finch) for more information
+- Visit the [project repository](https://github.com/ranton256/finch) for more information
 
 ## License
 

@@ -195,7 +195,7 @@ Run tests with `make test` or `./finch_test`.
 
 Complete documentation is available online and locally:
 
-- **Online**: Visit the [GitHub Pages site](https://ranton.github.io/finch/) (once published)
+- **Online**: Visit the [GitHub Pages site](https://ranton256.github.io/finch/) (once published)
 - **Local Preview**: Run `make preview` and visit http://localhost:8000
 
 The documentation includes:
