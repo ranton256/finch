@@ -8,6 +8,19 @@
 
 typedef uint32_t Pixel;
 
+// Common color constants for convenience
+extern const Pixel COLOR_WHITE;
+extern const Pixel COLOR_BLACK;
+extern const Pixel COLOR_RED;
+extern const Pixel COLOR_GREEN;
+extern const Pixel COLOR_BLUE;
+extern const Pixel COLOR_YELLOW;
+extern const Pixel COLOR_CYAN;
+extern const Pixel COLOR_MAGENTA;
+extern const Pixel COLOR_GRAY;
+extern const Pixel COLOR_DARK_GRAY;
+extern const Pixel COLOR_LIGHT_GRAY;
+
 typedef struct  {
 	uint8_t red, green, blue;
 } RGBColor24;
@@ -89,6 +102,9 @@ void DeleteGraphBuffer( GraphicsBuffer *buffer );
 
 // Get byte components of pixel into *rp, *gp, and *bp
 void PixelComponents(Pixel pixel, uint8_t* rp, uint8_t* gp, uint8_t* bp);
+
+// Clear/fill entire buffer with a solid color
+void ClearBuffer(GraphicsBuffer* buffer, Pixel color);
 
 // Assign color to the pixel at (x,y) in buffer.
 void PutPixel(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y);

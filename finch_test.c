@@ -24,13 +24,6 @@ const uint32_t kDrawTestHeight = 60;
 // Test Helper Functions
 // ============================================================================
 
-// Helper: Clear entire buffer to specified color
-// This replaces the repetitive FillRectOpaque(buffer, AsPixel(color), 0, 0, h, w) pattern
-static void ClearBuffer(GraphicsBuffer *buffer, RGBColor24 color)
-{
-	FillRectOpaque(buffer, AsPixel(color), 0, 0, buffer->height, buffer->width);
-}
-
 // Helper: Verify pixel at coordinates matches expected color
 // Returns true if match, false if mismatch (with error message)
 static bool AssertPixelEquals(GraphicsBuffer *buffer, uint32_t x, uint32_t y,
@@ -121,7 +114,7 @@ static bool PutPixelPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 // Success: One blue pixel at (kPixelX, kPixelY), rest of buffer is black
 static bool PutPixelTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	PutPixel(buffer, AsPixel(kBlue), kPixelX, kPixelY);
 	return CompareBufferToPredicate(buffer, PutPixelPredicate, kBlue, kBlack);
 }
@@ -130,7 +123,7 @@ static bool PutPixelTest(GraphicsBuffer *buffer)
 // Success: Reads correct colors from various positions, returns 0 for out-of-bounds
 static bool GetPixelTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 
 	// Put several different colored pixels at known locations
 	PutPixel(buffer, AsPixel(kRed), 10, 10);
@@ -164,7 +157,7 @@ static bool FillRectPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 // Success: Rectangle from (kLeft,kTop) to (kRight,kBottom) is red, rest is black
 static bool FillRectTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	FillRectOpaque(buffer, AsPixel(kRed), kLeft, kTop, kRight, kBottom);
 	return CompareBufferToPredicate(buffer, FillRectPredicate, kRed, kBlack);
 }
@@ -179,7 +172,7 @@ static bool DrawRectPredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 // Success: Red outline at rectangle edges, rest is black
 static bool DrawRectTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	DrawRect(buffer, AsPixel(kRed), kLeft, kTop, kRight, kBottom);
 	return CompareBufferToPredicate(buffer, DrawRectPredicate, kRed, kBlack);
 }
@@ -189,7 +182,7 @@ static bool DrawRectTest(GraphicsBuffer *buffer)
 // Success: No crashes, reasonable behavior for degenerate inputs
 static bool RectEdgeCasesTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 
 	// Zero-width rectangle (left == right)
 	DrawRect(buffer, AsPixel(kRed), 10, 10, 10, 20);
@@ -264,7 +257,7 @@ static bool DrawLinePredicate(uint8_t *pptr, uint32_t x, uint32_t y)
 // Success: Red diagonal line from (kLineStart,kLineStart) to (kLineStop,kLineStop)
 static bool DrawLineTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	// 45 degree line so predicate is simpler
 	DrawLine(buffer, AsPixel(kRed), kLineStart, kLineStart, kLineStop, kLineStop);
 	return CompareBufferToPredicate(buffer, DrawLinePredicate, kRed, kBlack);
@@ -275,7 +268,7 @@ static bool DrawLineTest(GraphicsBuffer *buffer)
 // Success: Lines visible in each octant without crashes
 static bool DrawLineVariantsTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 
 	// Horizontal line (y constant)
 	DrawLine(buffer, AsPixel(kRed), 10, 20, 30, 20);
@@ -369,7 +362,7 @@ static bool DrawLineVariantsTest(GraphicsBuffer *buffer)
 // Success: No crashes, reasonable behavior for edge cases
 static bool DrawLineEdgeCasesTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 
 	// Single-point line (start == end)
 	// Should either draw single pixel or do nothing gracefully
@@ -930,7 +923,7 @@ static int CircleStatus(uint32_t x, uint32_t y)
 // Success: Green circle outline at (kCenterX,kCenterY) with radius kRadius
 static bool CircleTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	DrawCircle(buffer, AsPixel(kGreen), kCenterX, kCenterY, kRadius);
 
 	RGBColor24 foreColor = kGreen;
@@ -978,7 +971,7 @@ static bool CircleTest(GraphicsBuffer *buffer)
 // Success: Solid green circle at (kCenterX,kCenterY) with radius kRadius
 static bool FillCircleTest(GraphicsBuffer *buffer)
 {
-	ClearBuffer(buffer, kBlack);
+	ClearBuffer(buffer, AsPixel(kBlack));
 	FillCircle(buffer, AsPixel(kGreen), kCenterX, kCenterY, kRadius);
 
 	RGBColor24 foreColor = kGreen;

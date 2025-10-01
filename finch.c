@@ -6,6 +6,19 @@
 #include <stdbool.h>
 #include <string.h>
 
+// Common color constants (0xAARRGGBB format)
+const Pixel COLOR_WHITE       = 0xFFFFFFFF;
+const Pixel COLOR_BLACK       = 0xFF000000;
+const Pixel COLOR_RED         = 0xFFFF0000;
+const Pixel COLOR_GREEN       = 0xFF00FF00;
+const Pixel COLOR_BLUE        = 0xFF0000FF;
+const Pixel COLOR_YELLOW      = 0xFFFFFF00;
+const Pixel COLOR_CYAN        = 0xFF00FFFF;
+const Pixel COLOR_MAGENTA     = 0xFFFF00FF;
+const Pixel COLOR_GRAY        = 0xFF808080;
+const Pixel COLOR_DARK_GRAY   = 0xFF404040;
+const Pixel COLOR_LIGHT_GRAY  = 0xFFC0C0C0;
+
 static uint32_t sLastBufferID = 0;
 
 typedef uint32_t CompositePixelsProc(uint32_t sp, uint32_t dp);
@@ -135,6 +148,10 @@ inline uint32_t LSCompositePixelsOpaque(uint32_t sp, uint32_t dp)
 	return sp;
 }
 
+void ClearBuffer(GraphicsBuffer* buffer, Pixel color)
+{
+	FillRectOpaque(buffer, color, 0, 0, buffer->height, buffer->width);
+}
 
 void PutPixel(GraphicsBuffer* buffer, Pixel color, int32_t x, int32_t y)
 {
